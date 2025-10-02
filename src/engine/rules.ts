@@ -5,7 +5,7 @@ export function clampResource( v:number, max :number) {
 
 }
 
-export function dealPhyscialDamage( attacker: Actor, defender: Actor, base: number) {
+export function dealPhysicalDamage( attacker: Actor, defender: Actor, base: number) {
     //simple: attack power = base + str; mitigation = armor + defense
     const raw = base + attacker.stats.str;
     const mitigated = Math.max(0, raw - defender.stats.armor);
