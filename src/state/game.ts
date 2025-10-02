@@ -9,7 +9,7 @@ const makeFighter = (): Actor => ({
   stats: {
     hp: { current: 10, max: 10 },
     mp: { current: 0, max: 0 },
-    str: 8,
+    str: 5,
     dex: 5,
     int: 3,
     armor: 3,
@@ -23,7 +23,7 @@ const makeGoblin = (): Actor => ({
   name: 'Goblin',
   isPlayer: false,
   stats: {
-    hp: { current: 8, max: 8 },
+    hp: { current: 15, max: 15 },
     mp: { current: 0, max: 0 },
     str: 5,
     dex: 4,
