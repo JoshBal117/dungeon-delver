@@ -33,8 +33,24 @@ export function step(state: CombatState): CombatState {
 
   // basic attack with a little variance
   const variance = rng.int(-1, 2);
-  const dmg = Math.max(1, dealPhysicalDamage(actor, target, 5) + variance);
+  const dmg = Math.max(1, dealPhysicalDamage(actor, target, 1) + variance);
+  console.debug( "Damage calc", {
+    attacker: actor.name,
+    defender: target.name,
+    base: 1,
+    STR: actor.stats.str,
+    ARM: target.stats.armor,
+    variance,
+    dmg,
+    defenderHP_before: `${target.stats.hp.current}/${target.stats.hp.max}`,
+  });
+  //Apply Damage
   applyDamage(target, dmg);
+  //log after applying damage
+  console.debug("After hit", {
+    defender: target.name,
+    defenderHP_after: `${target.stats.hp.current}/${target.stats.hp.max}`,
+  });
 
   const log = [
     ...state.log,
