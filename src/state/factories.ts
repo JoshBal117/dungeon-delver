@@ -1,8 +1,10 @@
 import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
+import { computeHpMax, computeMpMax } from '../engine/derived';
+
 
 export function makeKnight(): Actor {
-  return {
+  const a: Actor = {
     id: 'hero',
     name: 'Knight',
     isPlayer: true,
@@ -15,14 +17,21 @@ export function makeKnight(): Actor {
       speed: 4, armor: 3, resist: 0, luck: 2,
     },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
-    hp: { current: 10, max: 10 },
+    hp: { current: 0, max: 0 },
     mp: { current: 0,  max: 0  },
   };
+
+  const hpMax = computeHpMax(a);
+  const mpMax = computeMpMax(a);
+  a.hp = {current: hpMax, max: hpMax};
+  a.mp = {current: mpMax, max: mpMax};
+  return a;
+
 }
 
-export function makeGoblin(): Actor {
-  return {
-    id: 'gob-1',
+export function makeGoblin( id=1): Actor {
+  const a: Actor = {
+    id: `gob-${id}`,
     name: 'Goblin',
     isPlayer: false,
     level: 1,
@@ -37,4 +46,10 @@ export function makeGoblin(): Actor {
     hp: { current: 8, max: 8 },
     mp: { current: 0, max: 0 },
   };
+
+  const hpMax = computeHpMax(a);
+  const mpMax = computeMpMax(a);
+  a.hp = {current: hpMax, max: hpMax};
+  a.mp = {current: mpMax, max: mpMax};
+  return a;
 }
