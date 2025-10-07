@@ -5,6 +5,7 @@ export function computeHpMax(c: Actor): number {
     // Base rule for the character's max HP by default: eact level add floor(VIT/2) + 10
     // Example: level 1 = 10, plus per-level growth
     //  as more classes/characters are added they will have different starting healths and different growth rates
+    if (!c.isPlayer) return c.hp.max; //monsters have fixed health for now
     const baseAtL1 = 10;
     const perLevelGain = Math.floor(c.base.vit / 2) + 2;
     const fromLevels = perLevelGain * (c.level - 1);

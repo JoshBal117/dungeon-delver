@@ -2,7 +2,7 @@ import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
 
 export default function App() {
-  const { combat, attack, reset } = useGame();
+  const { combat, attack, resetCombat,  } = useGame();
 
   if (!combat) return <div style={{ color: '#eee', padding: 16 }}>Loading…</div>;
 
@@ -21,7 +21,7 @@ export default function App() {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button onClick={attack} disabled={combat.over}>Attack</button>
-        <button onClick={reset}>Reset</button>
+        <button onClick={resetCombat}>Reset</button>
         {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
       </div>
 

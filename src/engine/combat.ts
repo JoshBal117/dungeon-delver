@@ -1,7 +1,9 @@
 import { rng } from './rng';
 import { dealPhysicalDamage, applyDamage } from './rules';
 import type { Actor, CombatState } from './types';
-import { tryLevelUp } from './leveling';
+
+import { awardXPFromFoes } from './partyXp';
+
 
 export function initCombat(party: Actor[], foes: Actor[]): CombatState {
   const all = [...party, ...foes];
@@ -19,6 +21,7 @@ export function initCombat(party: Actor[], foes: Actor[]): CombatState {
 export function step(state: CombatState): CombatState {
   if (state.over) return state;
 
+  // whose turn?
   const id = state.order[state.turn % state.order.length];
   const actor = state.actors[id];
 
@@ -33,20 +36,10 @@ export function step(state: CombatState): CombatState {
     let log = [...state.log];
 
     if (partyAlive) {
-      const hero = Object.values(state.actors).find(a => a.isPlayer);
-      if (hero) {
-        const xpGain = 20;
-        hero.xp += xpGain;
-        const levelMsgs = tryLevelUp(hero); // string[] of messages
-        log = [
-          ...log,
-          { text: 'Victory!' },
-          { text: `Gained ${xpGain} XP (${hero.xp}/${hero.xpToNext})` },
-          ...levelMsgs.map(msg => ({ text: msg })),
-        ];
-      } else {
-        log.push({ text: 'Victory!' });
-      }
+      const heroes = Object.values(state.actors).filter(a => a.isPlayer);
+      const foes   = Object.values(state.actors).filter(a => !a.isPlayer);
+      const xpMsgs = awardXPFromFoes(heroes, foes);
+      log = [...log, { text: 'Victory!' }, ...xpMsgs.map(text => ({ text }))];
     } else {
       log.push({ text: 'Defeat…' });
     }
@@ -55,7 +48,7 @@ export function step(state: CombatState): CombatState {
   }
 
   // attack sequence
-  const variance = rng.int(-1, 2);
+  const variance = rng.int(-1, 2); // or tighten to (-1, 1)
   const dmg = Math.max(1, dealPhysicalDamage(actor, target, 1) + variance);
 
   console.debug('Damage calc', {
@@ -78,16 +71,15 @@ export function step(state: CombatState): CombatState {
 
   const log = [
     ...state.log,
-    {
-      text: `${actor.name} hits ${target.name} for ${dmg}. (${Math.max(0, target.hp.current)}/${target.hp.max} HP)`,
-    },
+    { text: `${actor.name} hits ${target.name} for ${dmg}. (${Math.max(0, target.hp.current)}/${target.hp.max} HP)` },
   ];
 
   const partyAlive = Object.values(state.actors).some(a => a.isPlayer && a.hp.current > 0);
-  const foesAlive = Object.values(state.actors).some(a => !a.isPlayer && a.hp.current > 0);
+  const foesAlive  = Object.values(state.actors).some(a => !a.isPlayer && a.hp.current > 0);
 
   const over = !(partyAlive && foesAlive);
   const finalLog = over ? [...log, { text: foesAlive ? 'Defeat…' : 'Victory!' }] : log;
 
   return { ...state, log: finalLog, over, turn: state.turn + 1 };
 }
+
