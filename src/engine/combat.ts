@@ -64,21 +64,29 @@ export function step(state: CombatState): CombatState {
 
   applyDamage(target, dmg);
 
-  console.debug('After hit', {
-    defender: target.name,
-    defenderHP_after: `${target.hp.current}/${target.hp.max}`,
-  });
-
   const log = [
     ...state.log,
     { text: `${actor.name} hits ${target.name} for ${dmg}. (${Math.max(0, target.hp.current)}/${target.hp.max} HP)` },
   ];
 
-  const partyAlive = Object.values(state.actors).some(a => a.isPlayer && a.hp.current > 0);
-  const foesAlive  = Object.values(state.actors).some(a => !a.isPlayer && a.hp.current > 0);
+const partyAliveAfter = Object.values(state.actors).some(a => a.isPlayer && a.hp.current > 0);
+  const foesAliveAfter = Object.values(state.actors).some(a => !a.isPlayer && a.hp.current > 0);
 
-  const over = !(partyAlive && foesAlive);
-  const finalLog = over ? [...log, { text: foesAlive ? 'Defeat…' : 'Victory!' }] : log;
+
+  if (partyAliveAfter && !foesAliveAfter) {
+    const heroes = Object.values(state.actors).filter(a => a.isPlayer);
+    const foes = Object.values(state.actors).filter(a => !a.isPlayer);
+    const xpMsgs = awardXPFromFoes(heroes, foes);
+
+    for (const h of heroes) {
+      h.hp.current = h.hp.max
+    }
+    const winLog = [...log, { text: 'Victory!' }, ...xpMsgs.map(text => ({ text }))];
+    return { ...state, log: winLog, over: true };
+  }
+ // If battle continues, move to next turn
+  const over = !(partyAliveAfter && foesAliveAfter);
+  const finalLog = over ? [...log, { text: foesAliveAfter ? 'Defeat…' : 'Victory!' }] : log;
 
   return { ...state, log: finalLog, over, turn: state.turn + 1 };
 }

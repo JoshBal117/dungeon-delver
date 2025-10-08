@@ -1,8 +1,27 @@
 import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
+import { useEffect, useRef } from 'react';
 
 export default function App() {
-  const { combat, attack, resetCombat,  } = useGame();
+  const { combat, attack, resetCombat, startNewCombat, setHeroes } = useGame();
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    if (!combat) return;
+    if (!combat.over) { savedRef.current = false; return; }
+
+    const partyAlive = Object.values(combat.actors).some(a => a.isPlayer && a.hp.current > 0);
+    if (!partyAlive) return; // don't save on defeat
+
+    if (!savedRef.current) {
+      const heroes = Object.values(combat.actors).filter(a => a.isPlayer);
+      setHeroes(heroes);             //  writes to persisted slice via zustand persist
+      savedRef.current = true;
+    }
+
+    // OPTIONAL: auto-queue next battle so you can grind XP quickly
+    // setTimeout(() => startNewCombat(), 400);
+  }, [combat, setHeroes, startNewCombat])
 
   if (!combat) return <div style={{ color: '#eee', padding: 16 }}>Loading…</div>;
 
@@ -22,6 +41,7 @@ export default function App() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button onClick={attack} disabled={combat.over}>Attack</button>
         <button onClick={resetCombat}>Reset</button>
+        <button onClick={startNewCombat}>New Battle</button>
         {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
       </div>
 
@@ -48,8 +68,23 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
           <div style={{ fontSize: 12, opacity: 0.8 }}>
             SPD {a.base.speed} | STR {a.base.str} | ARM {a.base.armor}
           </div>
+          {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+function XPBar({ xp, xpToNext }: { xp:number; xpToNext: number}) {
+  const pct = Math.max(0, Math.min(100, Math.floor((xp / xpToNext) * 100)));
+  return (
+    <div style={{ width: 160, marginTop: 4 }}>
+      <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 2 }}>
+        XP {xp}/{xpToNext}
+      </div>
+      <div style={{ height: 8, background: '#222', border: '1px solid #333' }}>
+        <div style={{ width: `${pct}%`, height: '100%' }} />
+      </div>
     </div>
   );
 }
