@@ -3,7 +3,7 @@ import type { Actor, LogEvent } from '../engine/types';
 import { useEffect, useRef } from 'react';
 
 export default function App() {
-  const { combat, attack, resetCombat, startNewCombat, setHeroes } = useGame();
+  const { combat, attack, resetCombat, startNewCombat, setHeroes, newGame } = useGame();
   const savedRef = useRef(false);
 
   useEffect(() => {
@@ -39,11 +39,12 @@ export default function App() {
       </section>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <button onClick={attack} disabled={combat.over}>Attack</button>
-        <button onClick={resetCombat}>Reset</button>
-        <button onClick={startNewCombat}>New Battle</button>
-        {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
-      </div>
+  <button onClick={attack} disabled={combat.over}>Attack</button>
+  <button onClick={resetCombat}>Reset</button>
+  <button onClick={startNewCombat}>New Battle</button>
+  <button onClick={newGame}>New Game (Level 1)</button>
+  {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+</div>
 
       <div style={{ background: '#000', border: '1px solid #333', padding: 12, height: 220, overflowY: 'auto' }}>
         {combat.log.map((l: LogEvent, i: number) => (
