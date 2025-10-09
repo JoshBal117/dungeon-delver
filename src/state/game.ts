@@ -6,66 +6,82 @@ import { makeKnight, makeGoblin } from './factories';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 
 type GameStore = {
-  heroes: Actor[];          // persisted
-  combat: CombatState;      // ephemeral
+  //  Persisted slice
+  heroes: Actor[];
+
+  //  Ephemeral per-battle state
+  combat: CombatState;
+
+  // Actions
   startNewCombat: () => void;
   attack: () => void;
   resetCombat: () => void;
   setHeroes: (h: Actor[]) => void;
+
 };
 
-// -- single place that guarantees sane HP/MP for any hero object
 const ensurePools = (a: Actor): Actor => {
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);
-  return {
-    ...a,
-    hp: {
-      max: hpMax,
-      // if missing/zero/negative, start full; otherwise clamp to max
-      current: a.hp?.current && a.hp.current > 0 ? Math.min(a.hp.current, hpMax) : hpMax,
-    },
-    mp: {
-      max: mpMax,
-      current: a.mp?.current && a.mp.current > 0 ? Math.min(a.mp.current, mpMax) : mpMax,
-    },
+
+  const hp = {
+    max:hpMax,
+    current: a.hp?.current > 0? Math.min(a.hp.current, hpMax) : hpMax,
   };
-};
+
+  const mp = {
+    max: mpMax,
+    current: a.mp?.current > 0 ? Math.min(a.mp.current, mpMax) : mpMax, 
+  };
+
+  return { ...a, hp, mp };
+}
 
 const rebuildCombat = (heroes: Actor[]): CombatState =>
-  initCombat(heroes.map(ensurePools), [makeGoblin()]);  // or a pack of goblins
+  initCombat(heroes.map(ensurePools), [makeGoblin()]);
 
 export const useGame = create<GameStore>()(
   persist(
-    (set, get) => {
-      const starter = [makeKnight()];                // create once
-      return {
-        heroes: starter.map(ensurePools),            // persisted slice
-        combat: rebuildCombat(starter),              // ephemeral from same base
+    (set, get) => ({
+      // Initial state: a Knight vs a Goblin
+      heroes: [makeKnight()],                 // persisted
+      combat: rebuildCombat([makeKnight()]),  // ephemeral, derived from heroes
 
-        startNewCombat: () => set({ combat: rebuildCombat(get().heroes) }),
-        attack: () => set({ combat: step(get().combat) }),
-        resetCombat: () => set({ combat: rebuildCombat(get().heroes) }),
-        setHeroes: (h) => set({ heroes: h }),       // persisted via partialize
-      };
-    },
+      // Actions
+      startNewCombat: () => set({ combat: rebuildCombat(get().heroes) }),
+      attack: () => set({ combat: step(get().combat) }),
+      resetCombat: () => set({ combat: rebuildCombat(get().heroes) }),
+      setHeroes: (h) => set({ heroes: h }),  // writing here auto-persists (partialize)
+    }),
     {
-      name: 'dd:save',
-      version: 1,
+      name: 'dd:save',                                   // localStorage key
+      version: 1,                                        // schema version for future migrations
       storage: createJSONStorage(() => localStorage),
 
-      // persist only long-term data
+      // Persist ONLY the heroes; do not serialize combat state
       partialize: (s) => ({ heroes: s.heroes }),
 
-      // DRY: use ensurePools here too, then rebuild combat
+      // When rehydrating, recompute derived pools & rebuild combat
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        const fixed = state.heroes.map(ensurePools);
+        const fixed = state.heroes.map((a) => {
+          const hpMax = computeHpMax(a);
+          const mpMax = computeMpMax(a);
+          return {
+            ...a,
+            hp: { current: Math.min(a.hp.current, hpMax), max: hpMax },
+            mp: { current: Math.min(a.mp.current, mpMax), max: mpMax },
+          };
+        });
+        // Put sanitized heroes back and rebuild combat fresh
         useGame.setState({
           heroes: fixed,
           combat: rebuildCombat(fixed),
         });
       },
+
+      // If you later change shapes, migrate older saves here
+      // migrate: (persisted, version) => persisted,
     }
   )
 );
