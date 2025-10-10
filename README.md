@@ -1,73 +1,41 @@
-# React + TypeScript + Vite
+## Built With
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Vite](https://vitejs.dev/)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+# ⚔️ Dungeon Delver
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A browser-based tactical RPG inspired by *Shining Force*, *Darkest Dungeon*, and *Final Fantasy Tactics*.  
+Built in **React + TypeScript + Zustand**, this project began as a learning exercise and evolved into a growing game prototype focused on **progression, persistence, and fast, replayable dungeon combat.**
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🧠 Concept
 
-## Expanding the ESLint configuration
+**Dungeon Delver** follows a lone Knight delving through cursed dungeons that bleed into the surface world.  
+Each battle tests your strategy and endurance — survive long enough to grow stronger, unlock new allies, and push deeper into the dark.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🎮 Current Features (v0.1 Prototype)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- 🧍 **Knight Hero** — A balanced fighter with scaling stats and XP-based progression.  
+- ⚔️ **Turn-Based Combat** — Player vs enemy, with variance and damage rolls.  
+- 💾 **Save System** — XP, levels, and hero stats persist via Zustand + localStorage.  
+- 🧮 **XP Scaling** — Diminishing XP returns for low-level foes.  
+- 📱 **Mobile Friendly** — Adaptive layout and larger touch targets.  
+- 🔄 **GitHub Pages Deployment** — Auto-build and deploy via CI/CD workflow.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚧 Planned Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- 🧩 **Character Page** — View stats, gear, and abilities.  
+- 🎒 **Inventory System** — Equip items, armor, and consumables.  
+- 🧙‍♂️ **Magic System** — Add MP-based skills and elemental effects.  
+- 🧟 **New Enemies** — Expand enemy types and group encounters.  
+- 🌄 **Dungeon Progression** — Chain battles into multi-stage runs with rewards.  
+- 🎨 **Sprites & Animations** — Visual representation for heroes and monsters.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
