@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 
 export default function App() {
-  const { combat, attack, resetCombat, startNewCombat, setHeroes, newGame } = useGame();
+  const { combat, attack, startNewCombat, setHeroes, newGame } = useGame();
   const savedRef = useRef(false);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ return (
 
     <div className="buttons">
       <button onClick={attack} disabled={combat.over}>Attack</button>
-      <button onClick={resetCombat}>Reset</button>
+       {/* <button onClick={resetCombat}>Reset</button> */}
       <button onClick={startNewCombat}>New Battle</button>
       <button onClick={newGame}>New Game (Level 1)</button>
       {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
