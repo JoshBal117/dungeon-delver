@@ -39,3 +39,29 @@ Each battle tests your strategy and endurance — survive long enough to grow st
 - 🎨 **Sprites & Animations** — Visual representation for heroes and monsters.
 
 ---
+
+## 🧰 Tech Stack
+
+| Layer | Library / Framework |
+|:--|:--|
+| **Frontend** | React + TypeScript |
+| **State Management** | Zustand (persistent store) |
+| **Build Tool** | Vite |
+| **Styling** | Custom CSS (mobile-first) |
+| **Deployment** | GitHub Pages (Actions workflow) |
+
+---
+
+## 🧪 Run Locally
+
+1. Clone this repository  
+   ```bash
+   git clone https://github.com/JoshBal117/dungeon-delver.git
+   cd dungeon-delver
+
+
+
+   Developed by Joshua Balao
+Created as both a game development experiment and a React/TypeScript portfolio project.
+
+“The dungeon remembers your steps. Whether you return stronger or weaker — that’s up to you.”
