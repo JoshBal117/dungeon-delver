@@ -2,6 +2,7 @@ import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
 import { useEffect, useRef } from 'react';
 
+
 export default function App() {
   const { combat, attack, resetCombat, startNewCombat, setHeroes, newGame } = useGame();
   const savedRef = useRef(false);
@@ -29,44 +30,42 @@ export default function App() {
   const players = actors.filter(a => a.isPlayer);
   const foes = actors.filter(a => !a.isPlayer);
 
-  return (
-    <div style={{ color: '#eee', background: '#111', minHeight: '100vh', fontFamily: 'system-ui', padding: 16 }}>
-      <h1>Dungeon Delver — Prototype</h1>
+return (
+  <div className="container">
+    <h1>Dungeon Delver — Prototype</h1>
 
-      <section style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
-        <Party title="Heroes" list={players} />
-        <Party title="Foes" list={foes} />
-      </section>
+    <section className="grid" style={{ marginBottom: 16 }}>
+      <Party title="Heroes" list={players} />
+      <Party title="Foes" list={foes} />
+    </section>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-  <button onClick={attack} disabled={combat.over}>Attack</button>
-  <button onClick={resetCombat}>Reset</button>
-  <button onClick={startNewCombat}>New Battle</button>
-  <button onClick={newGame}>New Game (Level 1)</button>
-  {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
-</div>
-
-      <div style={{ background: '#000', border: '1px solid #333', padding: 12, height: 220, overflowY: 'auto' }}>
-        {combat.log.map((l: LogEvent, i: number) => (
-          <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
-        ))}
-      </div>
+    <div className="buttons">
+      <button onClick={attack} disabled={combat.over}>Attack</button>
+      <button onClick={resetCombat}>Reset</button>
+      <button onClick={startNewCombat}>New Battle</button>
+      <button onClick={newGame}>New Game (Level 1)</button>
+      {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
     </div>
-  );
-}
+
+    <div className="log">
+      {combat.log.map((l: LogEvent, i) => (
+        <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
+      ))}
+    </div>
+  </div>
+);
 
 function Party({ title, list }: { title: string; list: Actor[] }) {
   return (
-    <div>
-      <h2 style={{ margin: '4px 0 8px' }}>{title}</h2>
+    <div className="panel">
+      <h2>{title}</h2>
       {list.map(a => (
-        <div key={a.id} style={{ marginBottom: 6 }}>
+        <div key={a.id} style={{ marginBottom: 10 }}>
           <strong>{a.name}</strong>{' '}
           <span>Lv {a.level}</span>{' '}
           <span>HP {a.hp.current}/{a.hp.max}</span>{' '}
-          {/* MP only if spellcaster */}
           {a.tags?.spellcaster ? <span> | MP {a.mp.current}/{a.mp.max}</span> : null}
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
+          <div className="statline">
             SPD {a.base.speed} | STR {a.base.str} | ARM {a.base.armor}
           </div>
           {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
@@ -74,7 +73,7 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
       ))}
     </div>
   );
-}
+
 
 function XPBar({ xp, xpToNext }: { xp:number; xpToNext: number}) {
   const pct = Math.max(0, Math.min(100, Math.floor((xp / xpToNext) * 100)));
@@ -87,5 +86,7 @@ function XPBar({ xp, xpToNext }: { xp:number; xpToNext: number}) {
         <div style={{ width: `${pct}%`, height: '100%' }} />
       </div>
     </div>
-  );
+   );
+  }
+ }
 }
