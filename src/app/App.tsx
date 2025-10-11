@@ -1,12 +1,13 @@
+import { useEffect, useRef } from 'react';
 import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
-import { useEffect, useRef } from 'react';
-
+import TitleScreen from './TitleScreen';
 
 export default function App() {
-  const { combat, attack, startNewCombat, setHeroes, newGame } = useGame();
+  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle } = useGame();
   const savedRef = useRef(false);
 
+  // Persist hero progression after a victorious battle
   useEffect(() => {
     if (!combat) return;
     if (!combat.over) { savedRef.current = false; return; }
@@ -16,44 +17,47 @@ export default function App() {
 
     if (!savedRef.current) {
       const heroes = Object.values(combat.actors).filter(a => a.isPlayer);
-      setHeroes(heroes);             //  writes to persisted slice via zustand persist
+      setHeroes(heroes); // writes to persisted slice via zustand persist
       savedRef.current = true;
     }
-
-    // OPTIONAL: auto-queue next battle so you can grind XP quickly
+    // Optionally auto-queue next battle for grinding:
     // setTimeout(() => startNewCombat(), 400);
-  }, [combat, setHeroes, startNewCombat])
+  }, [combat, setHeroes, startNewCombat]);
 
-  if (!combat) return <div style={{ color: '#eee', padding: 16 }}>Loading…</div>;
+  // --- UI routing: Title vs Battle ---
+  if (ui.screen === 'title') return <TitleScreen />;
+
+  if (!combat) return <div className="container">Loading…</div>;
 
   const actors: Actor[] = Object.values(combat.actors);
   const players = actors.filter(a => a.isPlayer);
   const foes = actors.filter(a => !a.isPlayer);
 
-return (
-  <div className="container">
-    <h1>Dungeon Delver — Prototype</h1>
+  return (
+    <div className="container">
+      <h1>Dungeon Delver — Prototype</h1>
 
-    <section className="grid" style={{ marginBottom: 16 }}>
-      <Party title="Heroes" list={players} />
-      <Party title="Foes" list={foes} />
-    </section>
+      <section className="grid" style={{ marginBottom: 16 }}>
+        <Party title="Heroes" list={players} />
+        <Party title="Foes" list={foes} />
+      </section>
 
-    <div className="buttons">
-      <button onClick={attack} disabled={combat.over}>Attack</button>
-       {/* <button onClick={resetCombat}>Reset</button> */}
-      <button onClick={startNewCombat}>New Battle</button>
-      <button onClick={newGame}>New Game (Level 1)</button>
-      {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+      <div className="buttons">
+        <button onClick={attack} disabled={combat.over}>Attack</button>
+        <button onClick={startNewCombat}>New Battle</button>
+        <button onClick={newGame}>New Game (Level 1)</button>
+        <button onClick={goToTitle}>Title</button>
+        {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+      </div>
+
+      <div className="log">
+        {combat.log.map((l: LogEvent, i) => (
+          <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
+        ))}
+      </div>
     </div>
-
-    <div className="log">
-      {combat.log.map((l: LogEvent, i) => (
-        <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
-      ))}
-    </div>
-  </div>
-);
+  );
+}
 
 function Party({ title, list }: { title: string; list: Actor[] }) {
   return (
@@ -73,9 +77,9 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
       ))}
     </div>
   );
+}
 
-
-function XPBar({ xp, xpToNext }: { xp:number; xpToNext: number}) {
+function XPBar({ xp, xpToNext }: { xp: number; xpToNext: number }) {
   const pct = Math.max(0, Math.min(100, Math.floor((xp / xpToNext) * 100)));
   return (
     <div style={{ width: 160, marginTop: 4 }}>
@@ -86,7 +90,5 @@ function XPBar({ xp, xpToNext }: { xp:number; xpToNext: number}) {
         <div style={{ width: `${pct}%`, height: '100%' }} />
       </div>
     </div>
-   );
-  }
- }
+  );
 }

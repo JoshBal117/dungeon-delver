@@ -1,7 +1,7 @@
 import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
 import { computeHpMax, computeMpMax } from '../engine/derived';
-
+import type {ClassId} from './game';
 
 export function makeKnight(): Actor {
   const a: Actor = {
@@ -53,3 +53,39 @@ export function makeGoblin( id=1): Actor {
   a.mp = {current: mpMax, max: mpMax};
   return a;
 }
+
+
+export type ClassDef = {
+  id: ClassId;
+  name: string;
+  description: string;
+  spellcaster: boolean;
+  // future: startingGear, growth, abilities, icon, sprite, etc.
+};
+
+export const CLASSES: Record<ClassId, ClassDef> = {
+  knight: {
+    id: 'knight',
+    name: 'Knight',
+    description: 'Frontline fighter with solid defenses and steady growth.',
+    spellcaster: false,
+  },
+  mage: {
+    id: 'mage',
+    name: 'Mage',
+    description: 'Strong minds lean towards powerful magic. High INT/MP, powerful spells (coming soon).',
+    spellcaster: true,
+  },
+  thief: {
+    id: 'thief',
+    name: 'Thief',
+    description: 'Fast, evasive, crit-focused (future).',
+    spellcaster: false,
+  },
+  cleric: {
+    id: 'cleric',
+    name: 'Cleric',
+    description: 'Balanced healer class. Future divine spells and buffs.',
+    spellcaster: true,
+  },
+};
