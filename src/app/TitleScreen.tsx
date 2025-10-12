@@ -11,28 +11,27 @@ export default function TitleScreen() {
       <h1>Dungeon Delver</h1>
 
       <div className="panel" style={{ marginBottom: 12 }}>
-        <p style={{ marginTop: 0 }}>
-          A tactical dungeon RPG prototype. Choose your hero and begin your delve.
-        </p>
+        <p style={{ marginTop: 0 }}>Choose your hero and begin your delve.</p>
         <div className="buttons">
           <button onClick={() => startNewRun('knight')}>Start — Knight</button>
-          {/* Framework-only buttons for now (disabled until implemented) */}
-          <button disabled title="Coming soon">Start — Wizard</button>
-          <button disabled title="Coming soon">Start — Thief</button>
+          <button onClick={() => startNewRun('mage')}>Start — Mage</button>
+          <button onClick={() => startNewRun('thief')}>Start — Thief</button>
+          <button onClick={() => startNewRun('cleric')}>Start — Cleric</button>
           {canContinue ? <button onClick={newGame}>New Game (reset)</button> : null}
         </div>
       </div>
 
       <div className="grid">
         <ClassCard id="knight" />
-        <ClassCard id="mage" disabled />
-        <ClassCard id="thief" disabled />
+        <ClassCard id="mage" />
+        <ClassCard id="thief" />
+        <ClassCard id="cleric" />
       </div>
     </div>
   );
 }
 
-function ClassCard({ id, disabled=false }: { id: keyof typeof CLASSES; disabled?: boolean }) {
+function ClassCard({ id }: { id: keyof typeof CLASSES }) {
   const c = CLASSES[id];
   return (
     <div className="panel">
@@ -40,7 +39,7 @@ function ClassCard({ id, disabled=false }: { id: keyof typeof CLASSES; disabled?
       <p style={{ marginTop: 4, opacity: .9 }}>{c.description}</p>
       <div className="statline">{c.spellcaster ? 'Spellcaster' : 'Martial'}</div>
       <div style={{ marginTop: 8 }}>
-        <button disabled={disabled}>Select</button>
+        <button onClick={() => useGame.getState().startNewRun(id)}>Select</button>
       </div>
     </div>
   );

@@ -3,11 +3,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CombatState, Actor } from '../engine/types';
 import { initCombat, step } from '../engine/combat';
-import { makeKnight, makeGoblin /* later: makeWizard, makeThief, makeCleric */ } from './factories';
+import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './factories';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 
 // Screens for a tiny UI state machine
-type UIScreen = 'title' | 'battle';
+type UIScreen = 'title' | 'battle' | 'sheet';
 
 // Class ids (framework for future characters)
 export type ClassId = 'knight' | 'mage' | 'thief' | 'cleric';
@@ -20,20 +20,20 @@ type GameStore = {
   combat: CombatState;
 
   // NEW: UI state
-  ui: { screen: UIScreen };
+  ui: { screen: UIScreen; selectID?:string };
 
-  // Actions
+
   startNewCombat: () => void;
   attack: () => void;
   setHeroes: (h: Actor[]) => void;
-
-  // Reset/seed
   newGame: () => void;
-
-  // NEW UI actions
   goToTitle: () => void;
   startNewRun: (classId: ClassId) => void;
   hasSave: () => boolean;
+
+  //character page
+  openSheet: (actorId: string) => void;
+  closeSheet: () => void
 };
 
 // Normalize resource pools based on derived max
@@ -91,12 +91,12 @@ export const useGame = create<GameStore>()(
 
         startNewRun: (classId) => {
           // framework: swap by class later
-          // const hero =
-          //   classId === 'mage'   ? makeWizard()
-          // : classId === 'thief'  ? makeThief()
-          // : classId === 'cleric' ? makeCleric()
-          // : makeKnight();
-          const hero = makeKnight(); // placeholder until others exist
+           const hero =
+            classId === 'mage'   ? makeMage()  :
+            classId === 'thief'  ? makeThief() :
+           classId === 'cleric' ? makeCleric() :
+                                 makeKnight() ;
+   
 
           const heroes = [ensurePools(hero)];
           set({
@@ -112,30 +112,23 @@ export const useGame = create<GameStore>()(
           const a = h[0];
           return (a.level ?? 1) > 1 || (a.xp ?? 0) > 0;
         },
+
+         // Character Page
+        openSheet: (actorId) => set({ ui: { screen: 'sheet', selectID: actorId } }),
+        closeSheet: () => set({ ui: { screen: 'battle' } }),
       };
     },
+  
     {
-      name: 'dd:save',
+       name: 'dd:save',
       version: 1,
       storage: createJSONStorage(() => localStorage),
-
-      // Persist ONLY the heroes; UI + combat are ephemeral
       partialize: (s) => ({ heroes: s.heroes }),
-
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const fixed = state.heroes.map(ensurePools);
-
-        // If a save exists, you can auto-open battle; otherwise title.
-        const hasSave =
-          fixed.length > 0 &&
-          ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
-
-        useGame.setState({
-          heroes: fixed,
-          combat: rebuildCombat(fixed),
-          ui: { screen: hasSave ? 'battle' : 'title' },
-        });
+        const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
+        useGame.setState({ heroes: fixed, combat: rebuildCombat(fixed), ui: { screen: hasSave ? 'battle' : 'title' } });
       },
     }
   )
