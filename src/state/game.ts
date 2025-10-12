@@ -4,13 +4,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CombatState, Actor } from '../engine/types';
 import { initCombat, step } from '../engine/combat';
 import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './factories';
+import type { ClassId } from './factories';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 
 // Screens for a tiny UI state machine
 type UIScreen = 'title' | 'battle' | 'sheet';
 
 // Class ids (framework for future characters)
-export type ClassId = 'knight' | 'mage' | 'thief' | 'cleric';
+
 
 type GameStore = {
   // Persisted slice
