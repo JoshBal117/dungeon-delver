@@ -5,8 +5,9 @@
 // -------------------------
 export type Resource = { current: number; max: number };
 
-//items for the game
-// --- Runtime item types used by Actor.inventory and equipment ---
+// -------------------------
+// Runtime item types (used by Actor.inventory/equipment)
+// -------------------------
 export type ItemSlot =
   | 'weapon' | 'shield'
   | 'helm' | 'cuirass' | 'gauntlets' | 'boots' | 'greaves'
@@ -30,26 +31,32 @@ export interface Item {
   name: string;
   type: ItemType;
   rarity: Rarity;
-  slot?: ItemSlot;
-  mods?: Partial<Record<string, number>>;
+  slot?: ItemSlot;                         // equippables set this
+  mods?: Partial<Record<string, number>>;  // flat additive mods
   consumable?: boolean;
   onUse?: OnUseCode;
   value?: number;
 }
 
+// Equipment object uses two ring slots (ring1, ring2)
+export type Equipment = Partial<{
+  weapon: Item; shield: Item; helm: Item; cuirass: Item; gauntlets: Item; boots: Item;
+  greaves: Item; robe: Item; ring1: Item; ring2: Item; amulet: Item; circlet: Item;
+}>;
+
 // -------------------------
 // Base Attributes
 // -------------------------
 export type BaseAttributes = {
-  str: number;  // Strength: physical attack power
-  dex: number;  // Dexterity: accuracy / agility
-  int: number;  // Intelligence: magic power
-  wis: number;  // Wisdom: healing / divine power
-  vit: number;  // Vitality: affects HP growth
-  speed: number; // Turn order / movement range
-  armor: number; // Base physical defense
-  resist: number; // Base magical resistance
-  luck: number;  // Critical hits / loot drops
+  str: number;
+  dex: number;
+  int: number;
+  wis: number;
+  vit: number;
+  speed: number;
+  armor: number;
+  resist: number;
+  luck: number;
 };
 
 // -------------------------
@@ -59,21 +66,20 @@ export type GearBonuses = {
   hpMax?: number;
   mpMax?: number;
   speed?: number;
-  armorPct?: number;  // flat % bonus
-  resistPct?: number; // flat % bonus
+  armorPct?: number;
+  resistPct?: number;
 };
 
 // -------------------------
 // Tags (metadata flags)
 // -------------------------
 export type Tags = {
-  spellcaster?: boolean; // determines MP visibility and spellcasting ability
+  spellcaster?: boolean;
   undead?: boolean;
   beast?: boolean;
   humanoid?: boolean;
   flying?: boolean;
   demon?: boolean;
-  // You can expand this later as needed
 };
 
 // -------------------------
@@ -88,12 +94,16 @@ export type Actor = {
   xp: number;
   xpToNext: number;
 
-  // Character-specific fields
   tags: Tags;               // flags (spellcaster, beast, etc.)
   base: BaseAttributes;     // raw stats that level up
   gear: GearBonuses;        // equipment modifiers
   hp: Resource;             // visible HP
   mp: Resource;             // visible MP (if spellcaster)
+
+  // NEW: inventory/equipment/currency
+  inventory?: Item[];
+  equipment?: Equipment;
+  gold?: number;
 };
 
 // -------------------------
@@ -103,8 +113,8 @@ export type LogEvent = { text: string };
 
 export type CombatState = {
   turn: number;
-  order: string[];               // actor IDs in initiative order
-  actors: Record<string, Actor>; // all combat participants
+  order: string[];
+  actors: Record<string, Actor>;
   log: LogEvent[];
   over: boolean;
 };

@@ -21,12 +21,16 @@ export function makeKnight(): Actor {
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 },
     mp: { current: 0,  max: 0  },
+
   };
 
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);
   a.hp = {current: hpMax, max: hpMax};
   a.mp = {current: mpMax, max: mpMax};
+   a.inventory = [];
+    a.equipment = {};
+    a.gold = 0;
   return a;
 
 }
@@ -43,11 +47,17 @@ export function makeMage(): Actor {
     base: { str: 1, dex: 3, int: 5, wis: 2, vit: 2, speed: 3, armor: 0, resist: 1, luck: 2 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
+   
   };
   const hpMax = computeHpMax(a), mpMax = computeMpMax(a);
   a.hp = { current: hpMax, max: hpMax }; a.mp = { current: mpMax, max: mpMax };
+   a.inventory = [];
+    a.equipment = {};
+    a.gold = 0;
   return a;
+
 }
+
 
 export function makeThief(): Actor {
   const a: Actor = {
@@ -61,9 +71,13 @@ export function makeThief(): Actor {
     base: { str: 3, dex: 5, int: 1, wis: 1, vit: 2, speed: 5, armor: 1, resist: 0, luck: 3 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
+  
   };
   const hpMax = computeHpMax(a), mpMax = computeMpMax(a);
   a.hp = { current: hpMax, max: hpMax }; a.mp = { current: mpMax, max: mpMax };
+   a.inventory = [];
+    a.equipment = {};
+    a.gold = 0;
   return a;
 }
 
@@ -79,9 +93,13 @@ export function makeCleric(): Actor {
     base: { str: 2, dex: 2, int: 2, wis: 5, vit: 3, speed: 3, armor: 2, resist: 2, luck: 2 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
+    
   };
   const hpMax = computeHpMax(a), mpMax = computeMpMax(a);
   a.hp = { current: hpMax, max: hpMax }; a.mp = { current: mpMax, max: mpMax };
+   a.inventory = [];
+    a.equipment = {};
+    a.gold = 0;
   return a;
 }
 
@@ -104,12 +122,16 @@ export function makeGoblin( id=1): Actor {
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 8, max: 8 },
     mp: { current: 0, max: 0 },
+  
   };
 
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);
   a.hp = {current: hpMax, max: hpMax};
   a.mp = {current: mpMax, max: mpMax};
+   a.inventory = [];
+    a.equipment = {};
+    a.gold = 0;
   return a;
 }
 

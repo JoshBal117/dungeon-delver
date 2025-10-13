@@ -4,7 +4,7 @@ export const POTIONS: ItemTemplate[] = [
   { code: 'mana-lesser',   name: 'Lesser Potion of Mana', type: 'potion', rarity: 'common',   onUse: 'mana_10' },
   { code: 'mana',          name: 'Potion of Mana',        type: 'potion', rarity: 'uncommon', onUse: 'mana_25' },
   { code: 'mana-greater',  name: 'Greater Potion of Mana',type: 'potion', rarity: 'rare',     onUse: 'mana_50' },
-  { code: 'mana-superior', name: 'Superior Potion of Mana',type:'potion', rarity: 'epic',     onUse: 'mana_50' },
+  { code: 'mana-superior', name: 'Superior Potion of Mana',type:'potion', rarity: 'epic',     onUse: 'mana_100' },
 
   { code: 'heal-lesser',   name: 'Lesser Healing Potion', type: 'potion', rarity: 'common',   onUse: 'heal_10' },
   { code: 'heal',          name: 'Healing Potion',        type: 'potion', rarity: 'uncommon', onUse: 'heal_25' },
