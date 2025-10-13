@@ -1,7 +1,9 @@
 import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
 import { computeHpMax, computeMpMax } from '../engine/derived';
-import type {ClassId} from './game';
+
+
+export type ClassId = 'knight' | 'mage' | 'thief' | 'cleric';
 
 export function makeKnight(): Actor {
   const a: Actor = {

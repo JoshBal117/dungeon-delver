@@ -5,6 +5,38 @@
 // -------------------------
 export type Resource = { current: number; max: number };
 
+//items for the game
+// --- Runtime item types used by Actor.inventory and equipment ---
+export type ItemSlot =
+  | 'weapon' | 'shield'
+  | 'helm' | 'cuirass' | 'gauntlets' | 'boots' | 'greaves'
+  | 'robe'
+  | 'ring' | 'amulet' | 'circlet';
+
+export type ItemType =
+  | 'weapon' | 'armor' | 'potion' | 'trinket' | 'tool'
+  | 'staff' | 'bow' | 'crossbow';
+
+export type Rarity  = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type OnUseCode =
+  | 'heal_10' | 'heal_25' | 'heal_50' | 'heal_100'
+  | 'mana_10' | 'mana_25' | 'mana_50' | 'mana_100'
+  | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
+
+export interface Item {
+  id: string;
+  code: string;
+  name: string;
+  type: ItemType;
+  rarity: Rarity;
+  slot?: ItemSlot;
+  mods?: Partial<Record<string, number>>;
+  consumable?: boolean;
+  onUse?: OnUseCode;
+  value?: number;
+}
+
 // -------------------------
 // Base Attributes
 // -------------------------

@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
 import TitleScreen from './TitleScreen';
+import CharacterSheet from './CharacterSheet';
+
 
 export default function App() {
-  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle } = useGame();
+  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet } = useGame();
   const savedRef = useRef(false);
 
   // Persist hero progression after a victorious battle
@@ -26,7 +28,7 @@ export default function App() {
 
   // --- UI routing: Title vs Battle ---
   if (ui.screen === 'title') return <TitleScreen />;
-
+  if (ui.screen === 'sheet') return <CharacterSheet />;
   if (!combat) return <div className="container">Loading…</div>;
 
   const actors: Actor[] = Object.values(combat.actors);
@@ -47,6 +49,7 @@ export default function App() {
         <button onClick={startNewCombat}>New Battle</button>
         <button onClick={newGame}>New Game (Level 1)</button>
         <button onClick={goToTitle}>Title</button>
+        {players[0] && <button onClick= {() => openSheet(players[0].id)}>Character</button>}
         {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
       </div>
 
