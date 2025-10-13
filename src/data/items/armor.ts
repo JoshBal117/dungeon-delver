@@ -45,4 +45,9 @@ export const ARMOR: ItemTemplate[] = [
   { code: 'black-iron-boots', name: 'Black Iron Boots', type: 'armor', slot: 'boots', rarity: 'rare', mods: { armor: 3 } },
   { code: 'black-iron-helm', name: 'Black Iron Helm', type: 'armor', slot: 'helm', rarity: 'rare', mods: { armor: 3 } },
   { code: 'black-iron-greaves', name: 'Black Iron Greaves', type: 'armor', slot: 'greaves', rarity: 'rare', mods: { armor: 3 } },
+
+  //shields 
+  { code: 'wooden-shield', name: 'Wooden Shield', type: 'armor', slot: 'shield', rarity: 'common', mods: { armor: 1 } },
+  { code: 'iron-shield', name: 'Iron Shield', type: 'armor', slot: 'shield', rarity: 'uncommon', mods: { armor: 2 } },
+  { code: 'steel-shield', name: 'Steel Shield', type: 'armor', slot: 'shield', rarity: 'rare', mods: { armor: 3 } },
 ];

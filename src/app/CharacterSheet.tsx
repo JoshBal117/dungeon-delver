@@ -1,4 +1,4 @@
-import { useGame } from '../state/game';
+import { useGame } from '../state/game.ts';
 import type { Item } from '../engine/types';
 
 export default function CharacterSheet() {
@@ -48,11 +48,11 @@ export default function CharacterSheet() {
                 <span style={{ flex:1, opacity: item ? 1 : .7 }}>
                   {item ? item.name : <i>Empty</i>}
                 </span>
-                {/* Enable after store has unequipSlot
+                
                 {item ? (
-                  <button onClick={() => useGame.getState().unequipSlot(a.id, slot)}>Unequip</button>
+                  <button onClick={() => useGame.getState().unequipItem(a.id, slot)}>Unequip</button>
                 ) : null}
-                */}
+                
               </div>
             );
           })}
@@ -70,14 +70,13 @@ export default function CharacterSheet() {
                   <span><b>{it.name}</b></span>
                   <small> ({it.type}{it.slot ? ` • ${it.slot}` : ''})</small>
                   <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
-                    {/* Enable after store has useItem/equipItem
+                     
                     {it.type === 'potion' ? (
                       <button onClick={() => useGame.getState().useItem(a.id, it.id)}>Use</button>
                     ) : null}
                     {it.slot ? (
                       <button onClick={() => useGame.getState().equipItem(a.id, it.id)}>Equip</button>
                     ) : null}
-                    */}
                   </div>
                 </li>
               ))}
