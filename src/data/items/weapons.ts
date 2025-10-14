@@ -10,6 +10,13 @@ export const WEAPONS: ItemTemplate[] = [
   { code: 'elven-dagger', name: 'Elven Dagger', type: 'weapon', slot: 'weapon', rarity: 'rare', hands: 1, damageType: 'stab', basePower: 10, mods: { dex: 1, speed: 1 }, tags: ['elven'] },
   { code: 'assassin-dagger', name: 'Assassin Dagger', type: 'weapon', slot: 'weapon', rarity: 'rare', hands: 1, damageType: 'stab', basePower: 10, mods: { dex: 1, critPct: 10 }, tags: ['assassin'] },
   { code: 'black-assassin-dagger', name: 'Black Assassin Dagger', type: 'weapon', slot: 'weapon', rarity: 'epic', hands: 1, damageType: 'stab', basePower: 12, mods: { dex: 1, critPct: 15 }, tags: ['assassin'] },
+  { code: 'goblin-shortsword', name: 'Goblin Shortsword', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'slash', basePower: 5, tags: ['goblin'] },
+  { code: 'goblin-bone-dagger', name: 'Goblin Bone Dagger', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'stab', basePower: 4, mods: { dex: 1 }, tags: ['goblin'] },
+  { code: 'elven-shortsword', name: 'Elven Shortsword', type: 'weapon', slot: 'weapon', rarity: 'rare', hands: 1, damageType: 'slash', basePower: 10, mods: { speed: 1 }, tags: ['elven'] },
+  { code: 'bronze-shortsword', name: 'Bronze Short Sword', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'slash', basePower: 7 },
+  { code: 'iron-shortsword', name: 'Iron Short Sword', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'slash', basePower: 8 },
+  { code: 'steel-shortsword', name: 'Steel Short Sword', type: 'weapon', slot: 'weapon', rarity: 'uncommon', hands: 1, damageType: 'slash', basePower: 10 },
+
 
   { code: 'gladius', name: 'Gladius', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'slash', basePower: 9 },
   { code: 'tanto', name: 'Tanto', type: 'weapon', slot: 'weapon', rarity: 'uncommon', hands: 1, damageType: 'stab', basePower: 9 },

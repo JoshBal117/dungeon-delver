@@ -49,18 +49,21 @@ export function step(state: CombatState): CombatState {
 
   // attack sequence
   const variance = rng.int(-1, 2); // or tighten to (-1, 1)
-  const dmg = Math.max(1, dealPhysicalDamage(actor, target, 1) + variance);
+  const dmg = Math.max(dealPhysicalDamage(actor, target) + variance);
 
-  console.debug('Damage calc', {
-    attacker: actor.name,
-    defender: target.name,
-    base: 1,
-    STR: actor.base.str,
-    ARM: target.base.armor,
-    variance,
-    dmg,
-    defenderHP_before: `${target.hp.current}/${target.hp.max}`,
-  });
+  const weapon = actor.equipment?.weapon;
+const wDmg = weapon?.mods?.damage ?? 0;
+console.log('Damage calc', {
+  attacker: actor.name,
+  defender: target.name,
+  weaponDamage: wDmg,
+  STR: actor.base.str,
+  ARM: target.base.armor,
+  variance,
+  dmg,
+  defenderHP_before: `${target.hp.current}/${target.hp.max}`,
+});
+
 
   applyDamage(target, dmg);
 

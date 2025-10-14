@@ -76,65 +76,50 @@ export const useGame = create<GameStore>()(
       const starter = [ensurePools(makeKnight())];
 
       return {
-        // persisted + ephemeral seeds
+        // --- state ---
         heroes: starter,
         combat: rebuildCombat(starter),
-
-        // NEW: default to title screen on boot
         ui: { screen: 'title' },
 
-        // actions
+        // --- actions ---
         startNewCombat: () => set({ combat: rebuildCombat(get().heroes) }),
         attack: () => set({ combat: step(get().combat) }),
         setHeroes: (h) => set({ heroes: h }),
 
-        // overwrite save with a fresh L1 Knight and jump into battle
-        newGame: () => {
-          const fresh = [ensurePools(makeKnight())];
-          const h = fresh[0];
-          h.inventory ??= [];
-          h.inventory?.push(
-            makeItemFromCode('heal-lesser'),
-            makeItemFromCode('iron-longsword'),
-            
-          ); console.log('Seeded items:', h.inventory.map(i => i.code)); 
+        // NEW: delegate to startNewRun so seeding happens in one place
+        newGame: () => get().startNewRun('knight'),
 
-          set({
-            heroes: fresh,
-            combat: rebuildCombat(fresh),
-            ui: { screen: 'battle' },
-          });
-        },
-
-        // UI actions
         goToTitle: () => set({ ui: { screen: 'title' } }),
 
         startNewRun: (classId) => {
-          // framework: swap by class later
-           const hero =
+          const hero =
             classId === 'mage'   ? makeMage()  :
             classId === 'thief'  ? makeThief() :
-           classId === 'cleric' ? makeCleric() :
-                                 makeKnight() ;
-   
+            classId === 'cleric' ? makeCleric() :
+                                   makeKnight();
 
           const heroes = [ensurePools(hero)];
-  const h = heroes[0];
-  h.inventory ??= [];
+          const h = heroes[0];
+          h.inventory ??= [];
 
-  // class-specific starters
-  if (classId === 'knight') {
-    h.inventory.push(makeItemFromCode('iron-longsword'));
-  } else if (classId === 'mage') {
-    h.inventory.push(makeItemFromCode('wooden-staff'), makeItemFromCode('mana_25'));
-  } else if (classId === 'thief') {
-    h.inventory.push(makeItemFromCode('iron-dagger'), makeItemFromCode('lockpicks'));
-  } else if (classId === 'cleric') {
-    h.inventory.push(makeItemFromCode('iron-mace'), makeItemFromCode('heal_25'));
-  }
+          const has = (code: string) => h.inventory!.some(i => i.code === code);
 
-  set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
-},
+          if (classId === 'knight') {
+            if (!has('iron-longsword')) h.inventory.push(makeItemFromCode('iron-longsword'));
+            if (!has('heal-lesser'))    h.inventory.push(makeItemFromCode('heal-lesser'));
+          } else if (classId === 'mage') {
+            if (!has('wooden-staff')) h.inventory.push(makeItemFromCode('wooden-staff'));
+            if (!has('mana_25'))      h.inventory.push(makeItemFromCode('mana_25'));
+          } else if (classId === 'thief') {
+            if (!has('iron-dagger')) h.inventory.push(makeItemFromCode('iron-dagger'));
+            if (!has('lockpicks'))   h.inventory.push(makeItemFromCode('lockpicks'));
+          } else if (classId === 'cleric') {
+            if (!has('iron-mace')) h.inventory.push(makeItemFromCode('iron-mace'));
+            if (!has('heal_25'))   h.inventory.push(makeItemFromCode('heal_25'));
+          }
+
+          set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
+        },
 
         hasSave: () => {
           const h = get().heroes;
@@ -143,99 +128,90 @@ export const useGame = create<GameStore>()(
           return (a.level ?? 1) > 1 || (a.xp ?? 0) > 0;
         },
 
-         // Character Page
         openSheet: (actorId) => set({ ui: { screen: 'sheet', selectID: actorId } }),
         closeSheet: () => set({ ui: { screen: 'battle' } }),
 
-        // --- Inventory / Equipment actions ---
-giveItem: (actorId, item) => {
-  const heroes = [...get().heroes];
-  const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-  a.inventory ??= [];
-  a.inventory.push(item);
-  set({ heroes });
-},
+        giveItem: (actorId, item) => {
+          const heroes = [...get().heroes];
+          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+          a.inventory ??= [];
+          a.inventory.push(item);
+          set({ heroes });
+        },
 
-useItem: (actorId, itemId) => {
-  const heroes = [...get().heroes];
-  const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-  if (!a?.inventory) return;
+        useItem: (actorId, itemId) => {
+          const heroes = [...get().heroes];
+          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+          if (!a?.inventory) return;
+          const ix = a.inventory.findIndex(it => it.id === itemId);
+          if (ix === -1) return;
+          const it = a.inventory[ix];
 
-  const ix = a.inventory.findIndex(it => it.id === itemId);
-  if (ix === -1) return;
-  const it = a.inventory[ix];
+          const code = it.onUse ?? 'none';
+          if (code.startsWith('heal')) {
+            const amt =
+              code === 'heal_10' ? 10 :
+              code === 'heal_50' ? 50 :
+              code === 'heal_100' ? 100 : 25;
+            a.hp.current = Math.min(a.hp.max, a.hp.current + amt);
+            a.inventory.splice(ix, 1);
+            set({ heroes });
+            return;
+          }
+          set({ heroes });
+        },
 
-  // basic potion effects — expand later
-  const code = it.onUse ?? 'none';
-  if (code.startsWith('heal')) {
-    const amt =
-      code === 'heal_10' ? 10 :
-      code === 'heal_50' ? 50 :
-      code === 'heal_100' ? 100 : 25; // defaults to heal_25
-    a.hp.current = Math.min(a.hp.max, a.hp.current + amt);
-    a.inventory.splice(ix, 1); // consume
-    set({ heroes });
-    return;
-  }
+        equipItem: (actorId, itemId) => {
+          const heroes = [...get().heroes];
+          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+          if (!a?.inventory) return;
 
-  // TODO: handle mana_xx, speed_buff, fire_res, ice_res
-  set({ heroes });
-},
+          const it = a.inventory.find(i => i.id === itemId);
+          if (!it || !it.slot) return;
 
-equipItem: (actorId, itemId) => {
-  const heroes = [...get().heroes];
-  const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-  if (!a?.inventory) return;
+          a.equipment ??= {};
+          if (it.slot === 'robe') a.equipment.cuirass = undefined;
+          if (it.slot === 'cuirass') a.equipment.robe = undefined;
 
-  const it = a.inventory.find(i => i.id === itemId);
-  if (!it || !it.slot) return;
+          const slotKey = it.slot as keyof NonNullable<typeof a.equipment>;
+          const prev = a.equipment[slotKey];
+          if (prev) a.inventory.push(prev);
 
-  a.equipment ??= {};
+          a.equipment[slotKey] = it;
+          a.inventory = a.inventory.filter(i => i.id !== it.id);
+          set({ heroes });
+        },
 
-  // robe vs cuirass exclusivity
-  if (it.slot === 'robe') a.equipment.cuirass = undefined;
-  if (it.slot === 'cuirass') a.equipment.robe = undefined;
+        unequipItem: (actorId, slot) => {
+          const heroes = [...get().heroes];
+          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+          if (!a?.equipment) return;
 
-  const slotKey = it.slot as keyof NonNullable<typeof a.equipment>;
-  const prev = a.equipment[slotKey];
-  if (prev) {
-    a.inventory.push(prev);             // return previously-equipped to bag
-  }
+          const eq = a.equipment[slot as keyof NonNullable<typeof a.equipment>];
+          if (!eq) return;
 
-  a.equipment[slotKey] = it;            // equip new item
-  a.inventory = a.inventory.filter(i => i.id !== it.id); // remove from bag
-  set({ heroes });
-},
-
-// NOTE: slot names must match your engine types (robe, not cloak; includes greaves)
-unequipItem: (actorId, slot) => {
-  const heroes = [...get().heroes];
-  const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-  if (!a?.equipment) return;
-
-  const eq = a.equipment[slot as keyof NonNullable<typeof a.equipment>];
-  if (!eq) return;
-
-  a.inventory ??= [];
-  a.inventory.push(eq);                  // move equipped item back to bag
-  a.equipment[slot as keyof NonNullable<typeof a.equipment>] = undefined;
-  set({ heroes });
-},
-
+          a.inventory ??= [];
+          a.inventory.push(eq);
+          a.equipment[slot as keyof NonNullable<typeof a.equipment>] = undefined;
+          set({ heroes });
+        },
       };
     },
-  
     {
-       name: 'dd:save',
+      name: 'dd:save',
       version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ heroes: s.heroes }),
-   onRehydrateStorage: () => (state) => {
-  if (!state) return;
-  const fixed = state.heroes.map(ensurePools).map(ensureBags);
-  const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
-  useGame.setState({ heroes: fixed, combat: rebuildCombat(fixed), ui: { screen: hasSave ? 'battle' : 'title' } });
-},
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const fixed = state.heroes.map(ensurePools).map(ensureBags);
+        const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
+        useGame.setState({
+          heroes: fixed,
+          combat: rebuildCombat(fixed),
+          ui: { screen: hasSave ? 'battle' : 'title' }
+        });
+      },
     }
   )
 );
