@@ -7,6 +7,7 @@ import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './facto
 import type { ClassId } from './factories';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
+import { newItemId } from '../engine/item-index';
 
 // Screens for a tiny UI state machine
 type UIScreen = 'title' | 'battle' | 'sheet';
@@ -64,6 +65,37 @@ const ensureBags = (a: Actor): Actor => ({
   equipment: a.equipment ?? {},
   gold: a.gold ?? 0,
 });
+
+function dedupeItemIds(a: Actor): Actor {
+  const seen = new Set<string>();
+
+  const inventory = (a.inventory ?? []).map(it => {
+    const id = it.id;
+    if (!id || seen.has(id)) return{  ...it, id: newItemId() };
+    seen.add(it.id);
+    return it;
+  });
+
+
+  const eq = {...( a.equipment ?? {}) };
+  ([
+    'weapon', 'shield', 'helm', 'cuirass', 'gauntlets', 'boots', 'greaves', 'robe', 
+    'ring1', 'ring2', 'amulet', 'circlet'
+  ] as const).forEach(slot=> {
+    const it = eq[slot];
+    if (!it) return;
+    const id = it.id;
+    if (!id || seen.has(id)) {
+      eq[slot] = { ...it, id: newItemId() };
+    } else {
+      seen.add(id);
+    }
+  });
+
+  return { ...a, inventory, equipment: eq };
+  
+}
+
 
 // For now, 1 goblin per fight (expand later)
 const spawnGoblins = () => [makeGoblin(1)];
@@ -204,7 +236,7 @@ export const useGame = create<GameStore>()(
       partialize: (s) => ({ heroes: s.heroes }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        const fixed = state.heroes.map(ensurePools).map(ensureBags);
+        const fixed = state.heroes.map(ensurePools).map(ensureBags).map(dedupeItemIds);
         const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
         useGame.setState({
           heroes: fixed,
