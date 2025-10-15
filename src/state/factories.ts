@@ -1,6 +1,7 @@
 import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
 import { computeHpMax, computeMpMax } from '../engine/derived';
+import { makeItemFromCode } from '../engine/item-index';
 
 
 export type ClassId = 'knight' | 'mage' | 'thief' | 'cleric';
@@ -114,16 +115,30 @@ export function makeGoblin( id=1): Actor {
     level: 1,
     xp: 0,
     xpToNext: xpToNextLevel(1),
-    tags: { spellcaster: false },
+    tags: { spellcaster: false, humanoid: true, },
     base: {
-      str: 3, dex: 4, int: 1, wis: 1, vit: 2,
+      str: 3, dex: 4, int: 1, wis: 1, vit: 5,
       speed: 3, armor: 0, resist: 0, luck: 2,
     },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
-    hp: { current: 8, max: 8 },
+    hp: { current: 14, max: 14 },
     mp: { current: 0, max: 0 },
-  
+
+    equipment: {},
+    inventory: [],
+    gold: 0,
+
   };
+  
+    const weaponPool = [ 'goblin-club', 'wooden-club', 'iron-dagger', 'iron-shortsword' ];
+    const wCode = weaponPool[Math.floor(Math.random() * weaponPool.length)];
+    a.equipment!.weapon = makeItemFromCode(wCode);
+
+    //light armor percentage chance
+    if (Math.random() < 0.60) a.equipment!.cuirass  =  makeItemFromCode('goblin-loincloth');
+    if (Math.random() < 0.40) a.equipment!.boots    =  makeItemFromCode('hide-gauntlets');
+
+  
 
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);

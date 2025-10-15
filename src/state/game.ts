@@ -157,6 +157,7 @@ export const useGame = create<GameStore>()(
 
   if (classId === 'knight') {
     giveItemUniqueByCode(h, makeItemFromCode('iron-longsword'));
+    giveItemUniqueByCode(h, makeItemFromCode('iron-knight-cuirass'));
   } else if (classId === 'mage') {
     giveItemUniqueByCode(h, makeItemFromCode('wooden-staff'));
     giveItemUniqueByCode(h, makeItemFromCode('mana_25'));
@@ -185,32 +186,55 @@ export const useGame = create<GameStore>()(
           const heroes = [...get().heroes];
           const a = heroes.find(h => h.id === actorId) ?? heroes[0];
           giveItemUniqueByCode(a, item);
-          a.inventory ??= [];
-          a.inventory.push(item);
           set({ heroes: heroes.map(dedupeInventory) });
         },
 
-        useItem: (actorId, itemId) => {
-          const heroes = [...get().heroes];
-          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-          if (!a?.inventory) return;
-          const ix = a.inventory.findIndex(it => it.id === itemId);
-          if (ix === -1) return;
-          const it = a.inventory[ix];
+       useItem: (actorId, itemId) => {
+  const s = get();
 
-          const code = it.onUse ?? 'none';
-          if (code.startsWith('heal')) {
-            const amt =
-              code === 'heal_10' ? 10 :
-              code === 'heal_50' ? 50 :
-              code === 'heal_100' ? 100 : 25;
-            a.hp.current = Math.min(a.hp.max, a.hp.current + amt);
-            a.inventory.splice(ix, 1);
-            set({ heroes });
-            return;
-          }
-          set({ heroes });
-        },
+  // Find hero & item in the persisted heroes slice (inventory lives here)
+  const heroes = [...s.heroes];
+  const hero = heroes.find(h => h.id === actorId) ?? heroes[0];
+  if (!hero?.inventory) return;
+
+  const ix = hero.inventory.findIndex(it => it.id === itemId);
+  if (ix === -1) return;
+  const it = hero.inventory[ix];
+
+  // Resolve heal amount from onUse code or fallback
+  const code = (it.onUse ?? 'none').toLowerCase();
+  const healMap: Record<string, number> = {
+    'heal_10': 10, 'heal_25': 25, 'heal_50': 50, 'heal_100': 100,
+    'heal-lesser': 10, 'heal': 25, 'heal-greater': 50, 'heal-superior': 100,
+  };
+  const amt = healMap[code] ?? it.mods?.heal ?? 0;
+
+  if (amt > 0) {
+    if (s.ui.screen === 'battle' && s.combat) {
+      // Heal the combat actor (so the battle UI shows it immediately)
+      const combat = { ...s.combat, actors: { ...s.combat.actors } };
+      const actor = combat.actors[actorId] ?? Object.values(combat.actors).find(a => a.isPlayer);
+      if (actor) {
+        actor.hp = { ...actor.hp, current: Math.min(actor.hp.max, actor.hp.current + amt) };
+        combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
+      }
+      // Consume from hero bag
+      hero.inventory.splice(ix, 1);
+      set({ heroes, combat });
+      return;
+    } else {
+      // Out of battle: heal the hero directly
+      hero.hp.current = Math.min(hero.hp.max, hero.hp.current + amt);
+      hero.inventory.splice(ix, 1);
+      set({ heroes });
+      return;
+    }
+  }
+
+  // TODO: handle mana/speed/resist potions later
+  set({ heroes });
+},
+
 
        equipItem: (actorId, itemId) => {
   const heroes = [...get().heroes];

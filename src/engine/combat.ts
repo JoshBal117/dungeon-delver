@@ -48,7 +48,7 @@ export function step(state: CombatState): CombatState {
   }
 
   // attack sequence
-  const variance = rng.int(-1, 2); // or tighten to (-1, 1)
+  const variance = rng.int(-2, 2); // or tighten to (-1, 1)
   const dmg = Math.max(dealPhysicalDamage(actor, target) + variance);
 
   const weapon = actor.equipment?.weapon;
