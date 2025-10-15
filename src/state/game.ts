@@ -76,41 +76,51 @@ function dedupeInventory(a: Actor): Actor {
   const seenIds = new Set<string>();
   const seenCodes = new Set<string>();
 
-  const inventory = (a.inventory ?? []).filter(it => {
-    // Ensure a unique runtime id for React keys (handles HMR reloads)
-    let id = it.id;
-    if (!id || seenIds.has(id)) {
-      id = newItemId();            // <- uses your exported helper
-      it = { ...it, id };
-    }
-    seenIds.add(id);
-
-    // Potions/consumables can duplicate by code
-    if (it.type === 'potion' || it.consumable) return true;
-
-    // For weapons/armor/trinkets/etc, keep only one per code
-    if (seenCodes.has(it.code)) return false;
-    seenCodes.add(it.code);
-    return true;
-  });
-
-  // Also normalize equipment IDs
+  // normalize equipment IDs and collect equipped non-consumable codes
   const eq = { ...(a.equipment ?? {}) };
+  const equippedCodes = new Set<string>();
   ([
     'weapon','shield','helm','cuirass','gauntlets','boots','greaves','robe',
     'ring1','ring2','amulet','circlet'
   ] as const).forEach(slot => {
     const it = eq[slot];
     if (!it) return;
+
+    // normalize id
     if (!it.id || seenIds.has(it.id)) {
       eq[slot] = { ...it, id: newItemId() };
-    } else {
-      seenIds.add(it.id);
     }
+    seenIds.add(eq[slot]!.id);
+
+    // track codes so bag can't hold a duplicate non-consumable of the same thing
+    equippedCodes.add(eq[slot]!.code);
   });
 
-  return { ...a, inventory, equipment: eq };
+  // rebuild inventory with normalized ids and no dupes vs bag or equipped
+  const normalized: Item[] = [];
+  for (const orig of (a.inventory ?? [])) {
+    const id = (!orig.id || seenIds.has(orig.id)) ? newItemId() : orig.id;
+    seenIds.add(id);
+    const it = { ...orig, id };
+
+    // potions/consumables can duplicate freely by code
+    if (it.type === 'potion' || it.consumable) {
+      normalized.push(it);
+      continue;
+    }
+
+    // for non-consumables: drop if matches any equipped code OR a previous bag code
+    if (equippedCodes.has(it.code)) continue;
+    if (seenCodes.has(it.code)) continue;
+
+    seenCodes.add(it.code);
+    normalized.push(it);
+  }
+
+  return { ...a, inventory: normalized, equipment: eq };
 }
+
+
 
 
 
@@ -192,7 +202,7 @@ export const useGame = create<GameStore>()(
        useItem: (actorId, itemId) => {
   const s = get();
 
-  // Find hero & item in the persisted heroes slice (inventory lives here)
+  // find hero & item in the persisted slice
   const heroes = [...s.heroes];
   const hero = heroes.find(h => h.id === actorId) ?? heroes[0];
   if (!hero?.inventory) return;
@@ -201,38 +211,40 @@ export const useGame = create<GameStore>()(
   if (ix === -1) return;
   const it = hero.inventory[ix];
 
-  // Resolve heal amount from onUse code or fallback
   const code = (it.onUse ?? 'none').toLowerCase();
   const healMap: Record<string, number> = {
     'heal_10': 10, 'heal_25': 25, 'heal_50': 50, 'heal_100': 100,
     'heal-lesser': 10, 'heal': 25, 'heal-greater': 50, 'heal-superior': 100,
   };
   const amt = healMap[code] ?? it.mods?.heal ?? 0;
+  if (amt <= 0) { set({ heroes }); return; }
 
-  if (amt > 0) {
-    if (s.ui.screen === 'battle' && s.combat) {
-      // Heal the combat actor (so the battle UI shows it immediately)
-      const combat = { ...s.combat, actors: { ...s.combat.actors } };
-      const actor = combat.actors[actorId] ?? Object.values(combat.actors).find(a => a.isPlayer);
-      if (actor) {
-        actor.hp = { ...actor.hp, current: Math.min(actor.hp.max, actor.hp.current + amt) };
-        combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
-      }
-      // Consume from hero bag
-      hero.inventory.splice(ix, 1);
-      set({ heroes, combat });
-      return;
-    } else {
-      // Out of battle: heal the hero directly
-      hero.hp.current = Math.min(hero.hp.max, hero.hp.current + amt);
-      hero.inventory.splice(ix, 1);
-      set({ heroes });
-      return;
+  if (s.ui.screen === 'battle' && s.combat) {
+    // in-battle: heal combat actor + consume item
+    const combat = { ...s.combat, actors: { ...s.combat.actors } };
+    const actor = combat.actors[actorId] ?? Object.values(combat.actors).find(a => a.isPlayer);
+    if (actor) {
+      actor.hp = { ...actor.hp, current: Math.min(actor.hp.max, actor.hp.current + amt) };
+      combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
     }
+    hero.inventory.splice(ix, 1);
+    set({ heroes, combat }); // ✅ update both slices
+    return;
   }
 
-  // TODO: handle mana/speed/resist potions later
-  set({ heroes });
+  // out-of-battle: heal persisted hero, mirror into combat if present
+  hero.hp.current = Math.min(hero.hp.max, hero.hp.current + amt);
+  hero.inventory.splice(ix, 1);
+
+  if (s.combat && s.combat.actors[actorId]) {
+    const combat = { ...s.combat, actors: { ...s.combat.actors } };
+    const act = combat.actors[actorId];
+    act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
+    combat.log = [...combat.log, { text: `${act.name} uses a potion and heals ${amt} HP.` }];
+    set({ heroes, combat }); // ✅ mirror heal into combat
+  } else {
+    set({ heroes }); // ✅ only heroes slice changes
+  }
 },
 
 
