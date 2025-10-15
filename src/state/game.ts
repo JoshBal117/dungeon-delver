@@ -72,35 +72,46 @@ function giveItemUniqueByCode(a: Actor, item: Item) {
   a.inventory.push(item);
 }
 
-function dedupeItemIds(a: Actor): Actor {
-  const seen = new Set<string>();
+function dedupeInventory(a: Actor): Actor {
+  const seenIds = new Set<string>();
+  const seenCodes = new Set<string>();
 
-  const inventory = (a.inventory ?? []).map(it => {
-    const id = it.id;
-    if (!id || seen.has(id)) return{  ...it, id: newItemId() };
-    seen.add(it.id);
-    return it;
+  const inventory = (a.inventory ?? []).filter(it => {
+    // Ensure a unique runtime id for React keys (handles HMR reloads)
+    let id = it.id;
+    if (!id || seenIds.has(id)) {
+      id = newItemId();            // <- uses your exported helper
+      it = { ...it, id };
+    }
+    seenIds.add(id);
+
+    // Potions/consumables can duplicate by code
+    if (it.type === 'potion' || it.consumable) return true;
+
+    // For weapons/armor/trinkets/etc, keep only one per code
+    if (seenCodes.has(it.code)) return false;
+    seenCodes.add(it.code);
+    return true;
   });
 
-
-  const eq = {...( a.equipment ?? {}) };
+  // Also normalize equipment IDs
+  const eq = { ...(a.equipment ?? {}) };
   ([
-    'weapon', 'shield', 'helm', 'cuirass', 'gauntlets', 'boots', 'greaves', 'robe', 
-    'ring1', 'ring2', 'amulet', 'circlet'
-  ] as const).forEach(slot=> {
+    'weapon','shield','helm','cuirass','gauntlets','boots','greaves','robe',
+    'ring1','ring2','amulet','circlet'
+  ] as const).forEach(slot => {
     const it = eq[slot];
     if (!it) return;
-    const id = it.id;
-    if (!id || seen.has(id)) {
+    if (!it.id || seenIds.has(it.id)) {
       eq[slot] = { ...it, id: newItemId() };
     } else {
-      seen.add(id);
+      seenIds.add(it.id);
     }
   });
 
   return { ...a, inventory, equipment: eq };
-  
 }
+
 
 
 // For now, 1 goblin per fight (expand later)
@@ -122,7 +133,7 @@ export const useGame = create<GameStore>()(
         // --- actions ---
         startNewCombat: () => set({ combat: rebuildCombat(get().heroes) }),
         attack: () => set({ combat: step(get().combat) }),
-        setHeroes: (h) => set({ heroes: h }),
+        setHeroes: (h) => set({ heroes: h.map(ensurePools).map(ensureBags).map(dedupeInventory) }),
 
         // NEW: delegate to startNewRun so seeding happens in one place
         newGame: () => get().startNewRun('knight'),
@@ -156,7 +167,7 @@ export const useGame = create<GameStore>()(
     giveItemUniqueByCode(h, makeItemFromCode('iron-mace'));
     giveItemUniqueByCode(h, makeItemFromCode('heal_25'));
   }
-
+  
   set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
 },
 
@@ -173,9 +184,10 @@ export const useGame = create<GameStore>()(
         giveItem: (actorId, item) => {
           const heroes = [...get().heroes];
           const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+          giveItemUniqueByCode(a, item);
           a.inventory ??= [];
           a.inventory.push(item);
-          set({ heroes });
+          set({ heroes: heroes.map(dedupeInventory) });
         },
 
         useItem: (actorId, itemId) => {
@@ -249,7 +261,7 @@ export const useGame = create<GameStore>()(
       partialize: (s) => ({ heroes: s.heroes }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        const fixed = state.heroes.map(ensurePools).map(ensureBags).map(dedupeItemIds);
+        const fixed = state.heroes.map(ensurePools).map(ensureBags).map(dedupeInventory);
         const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
         useGame.setState({
           heroes: fixed,

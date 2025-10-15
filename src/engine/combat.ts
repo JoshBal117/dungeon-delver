@@ -1,7 +1,7 @@
 import { rng } from './rng';
 import { dealPhysicalDamage, applyDamage } from './rules';
 import type { Actor, CombatState } from './types';
-
+import { makeItemFromCode } from './item-index';
 import { awardXPFromFoes } from './partyXp';
 
 
@@ -81,8 +81,20 @@ const partyAliveAfter = Object.values(state.actors).some(a => a.isPlayer && a.hp
     const foes = Object.values(state.actors).filter(a => !a.isPlayer);
     const xpMsgs = awardXPFromFoes(heroes, foes);
 
+    const dropMsgs: string[] = [];
+     if (rng.int(0, 99) < 40) {
+      const potion = makeItemFromCode('heal-lesser');
+      const hero = heroes[0];
+      hero.inventory ??= [];
+      hero.inventory.push(potion);
+      dropMsgs.push(`${hero.name} finds a ${potion.name}.`);
+     }
+
    
-    const winLog = [...log, { text: 'Victory!' }, ...xpMsgs.map(text => ({ text }))];
+    const winLog = [...log, { text: 'Victory!' }, 
+      ...xpMsgs.map(text => ({ text })),
+      ...dropMsgs.map(text => ({ text }))
+    ];
     return { ...state, log: winLog, over: true };
   }
  // If battle continues, move to next turn
