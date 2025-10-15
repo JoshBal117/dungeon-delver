@@ -66,6 +66,12 @@ const ensureBags = (a: Actor): Actor => ({
   gold: a.gold ?? 0,
 });
 
+function giveItemUniqueByCode(a: Actor, item: Item) {
+  a.inventory ??= [];
+  if (a.inventory.some(x => x.code === item.code)) return;
+  a.inventory.push(item);
+}
+
 function dedupeItemIds(a: Actor): Actor {
   const seen = new Set<string>();
 
@@ -123,35 +129,36 @@ export const useGame = create<GameStore>()(
 
         goToTitle: () => set({ ui: { screen: 'title' } }),
 
-        startNewRun: (classId) => {
-          const hero =
-            classId === 'mage'   ? makeMage()  :
-            classId === 'thief'  ? makeThief() :
-            classId === 'cleric' ? makeCleric() :
-                                   makeKnight();
+       startNewRun: (classId: ClassId) => {
+  if (get().ui.screen !== 'title') return;   // guard against double clicks
 
-          const heroes = [ensurePools(hero)];
-          const h = heroes[0];
-          h.inventory ??= [];
+ 
 
-          const has = (code: string) => h.inventory!.some(i => i.code === code);
+  const hero =
+    classId === 'mage'   ? makeMage()  :
+    classId === 'thief'  ? makeThief() :
+    classId === 'cleric' ? makeCleric() :
+                           makeKnight();
 
-          if (classId === 'knight') {
-            if (!has('iron-longsword')) h.inventory.push(makeItemFromCode('iron-longsword'));
-            if (!has('heal-lesser'))    h.inventory.push(makeItemFromCode('heal-lesser'));
-          } else if (classId === 'mage') {
-            if (!has('wooden-staff')) h.inventory.push(makeItemFromCode('wooden-staff'));
-            if (!has('mana_25'))      h.inventory.push(makeItemFromCode('mana_25'));
-          } else if (classId === 'thief') {
-            if (!has('iron-dagger')) h.inventory.push(makeItemFromCode('iron-dagger'));
-            if (!has('lockpicks'))   h.inventory.push(makeItemFromCode('lockpicks'));
-          } else if (classId === 'cleric') {
-            if (!has('iron-mace')) h.inventory.push(makeItemFromCode('iron-mace'));
-            if (!has('heal_25'))   h.inventory.push(makeItemFromCode('heal_25'));
-          }
+  const heroes = [ensurePools(hero)];
+  const h = heroes[0];
+  h.inventory ??= [];
 
-          set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
-        },
+  if (classId === 'knight') {
+    giveItemUniqueByCode(h, makeItemFromCode('iron-longsword'));
+  } else if (classId === 'mage') {
+    giveItemUniqueByCode(h, makeItemFromCode('wooden-staff'));
+    giveItemUniqueByCode(h, makeItemFromCode('mana_25'));
+  } else if (classId === 'thief') {
+    giveItemUniqueByCode(h, makeItemFromCode('iron-dagger'));
+    giveItemUniqueByCode(h, makeItemFromCode('lockpicks'));
+  } else if (classId === 'cleric') {
+    giveItemUniqueByCode(h, makeItemFromCode('iron-mace'));
+    giveItemUniqueByCode(h, makeItemFromCode('heal_25'));
+  }
+
+  set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
+},
 
         hasSave: () => {
           const h = get().heroes;
@@ -193,26 +200,32 @@ export const useGame = create<GameStore>()(
           set({ heroes });
         },
 
-        equipItem: (actorId, itemId) => {
-          const heroes = [...get().heroes];
-          const a = heroes.find(h => h.id === actorId) ?? heroes[0];
-          if (!a?.inventory) return;
+       equipItem: (actorId, itemId) => {
+  const heroes = [...get().heroes];
+  const a = heroes.find(h => h.id === actorId) ?? heroes[0];
+  if (!a?.inventory) return;
 
-          const it = a.inventory.find(i => i.id === itemId);
-          if (!it || !it.slot) return;
+  const it = a.inventory.find(i => i.id === itemId);
+  if (!it || !it.slot) return;
 
-          a.equipment ??= {};
-          if (it.slot === 'robe') a.equipment.cuirass = undefined;
-          if (it.slot === 'cuirass') a.equipment.robe = undefined;
+  a.equipment ??= {};
 
-          const slotKey = it.slot as keyof NonNullable<typeof a.equipment>;
-          const prev = a.equipment[slotKey];
-          if (prev) a.inventory.push(prev);
+  // robe vs cuirass exclusivity
+  if (it.slot === 'robe') a.equipment.cuirass = undefined;
+  if (it.slot === 'cuirass') a.equipment.robe = undefined;
 
-          a.equipment[slotKey] = it;
-          a.inventory = a.inventory.filter(i => i.id !== it.id);
-          set({ heroes });
-        },
+  const slotKey = it.slot as keyof NonNullable<typeof a.equipment>;
+  const prev = a.equipment[slotKey];
+
+  // ✅ Only push previous to bag if it’s a DIFFERENT item
+  if (prev && prev.id !== it.id) {
+    a.inventory.push(prev);
+  }
+
+  a.equipment[slotKey] = it;                         // equip new item
+  a.inventory = a.inventory.filter(i => i.id !== it.id); // remove from bag
+  set({ heroes });
+},
 
         unequipItem: (actorId, slot) => {
           const heroes = [...get().heroes];

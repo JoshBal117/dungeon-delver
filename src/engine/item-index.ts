@@ -11,6 +11,7 @@ export function newItemId(): string {
 }
 
 export function makeItemFromCode(code: string): Item {
+  console.log('[makeItemFromCode]', code);
   const t: ItemTemplate | undefined = ITEM_MAP[code];
   if (!t) throw new Error(`Unknown item code: ${code}`);
 
