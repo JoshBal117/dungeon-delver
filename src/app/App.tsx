@@ -4,10 +4,30 @@ import type { Actor, LogEvent } from '../engine/types';
 import TitleScreen from './TitleScreen';
 import CharacterSheet from './CharacterSheet';
 
-
 export default function App() {
   const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet } = useGame();
   const savedRef = useRef(false);
+
+  // --- tiny global header ---
+  const Header = () => (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 10,
+      display: 'flex', justifyContent: 'space-between',
+      alignItems: 'center', padding: '8px 12px',
+      background: '#111', borderBottom: '1px solid #222'
+    }}>
+      <div style={{ fontWeight: 700 }}>Dungeon Delver</div>
+      <div className="buttons" style={{ gap: 8 }}>
+        <button onClick={goToTitle}>Title</button>
+        <button
+          title="Clear save and start a fresh run"
+          onClick={() => { localStorage.removeItem('dd:save'); newGame(); }}
+        >
+          Reset Save
+        </button>
+      </div>
+    </div>
+  );
 
   // Persist hero progression after a victorious battle
   useEffect(() => {
@@ -22,43 +42,66 @@ export default function App() {
       setHeroes(heroes); // writes to persisted slice via zustand persist
       savedRef.current = true;
     }
-    // Optionally auto-queue next battle for grinding:
-    // setTimeout(() => startNewCombat(), 400);
   }, [combat, setHeroes, startNewCombat]);
 
-  // --- UI routing: Title vs Battle ---
-  if (ui.screen === 'title') return <TitleScreen />;
-  if (ui.screen === 'sheet') return <CharacterSheet />;
-  if (!combat) return <div className="container">Loading…</div>;
+  // --- UI routing ---
+  if (ui.screen === 'title') {
+    return (
+      <>
+        <Header />
+        <TitleScreen />
+      </>
+    );
+  }
+
+  if (ui.screen === 'sheet') {
+    return (
+      <>
+        <Header />
+        <CharacterSheet />
+      </>
+    );
+  }
+
+  if (!combat) {
+    return (
+      <>
+        <Header />
+        <div className="container">Loading…</div>
+      </>
+    );
+  }
 
   const actors: Actor[] = Object.values(combat.actors);
   const players = actors.filter(a => a.isPlayer);
   const foes = actors.filter(a => !a.isPlayer);
 
   return (
-    <div className="container">
-      <h1>Dungeon Delver — Prototype</h1>
+    <>
+      <Header />
+      <div className="container">
+        <h1>Dungeon Delver — Prototype</h1>
 
-      <section className="grid" style={{ marginBottom: 16 }}>
-        <Party title="Heroes" list={players} />
-        <Party title="Foes" list={foes} />
-      </section>
+        <section className="grid" style={{ marginBottom: 16 }}>
+          <Party title="Heroes" list={players} />
+          <Party title="Foes" list={foes} />
+        </section>
 
-      <div className="buttons">
-        <button onClick={attack} disabled={combat.over}>Attack</button>
-        <button onClick={startNewCombat}>New Battle</button>
-        <button onClick={newGame}>New Game (Level 1)</button>
-        <button onClick={goToTitle}>Title</button>
-        {players[0] && <button onClick= {() => openSheet(players[0].id)}>Character</button>}
-        {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+        <div className="buttons">
+          <button onClick={attack} disabled={combat.over}>Attack</button>
+          <button onClick={startNewCombat}>New Battle</button>
+          {/* Removed in-body "New Game" — it's now in the header as Reset Save */}
+          {players[0] && <button onClick={() => openSheet(players[0].id)}>Character</button>}
+          {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+        </div>
+
+        <div className="log">
+          {combat.log.map((l: LogEvent, i) => (
+            <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
+          ))}
+        </div>
       </div>
-
-      <div className="log">
-        {combat.log.map((l: LogEvent, i) => (
-          <div key={i} style={{ fontFamily: 'monospace' }}>{l.text}</div>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }
 

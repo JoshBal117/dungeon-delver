@@ -81,9 +81,7 @@ const partyAliveAfter = Object.values(state.actors).some(a => a.isPlayer && a.hp
     const foes = Object.values(state.actors).filter(a => !a.isPlayer);
     const xpMsgs = awardXPFromFoes(heroes, foes);
 
-    for (const h of heroes) {
-      h.hp.current = h.hp.max
-    }
+   
     const winLog = [...log, { text: 'Victory!' }, ...xpMsgs.map(text => ({ text }))];
     return { ...state, log: winLog, over: true };
   }
