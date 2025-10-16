@@ -96,5 +96,39 @@ Hit/miss will use speed and luck differentials; crits scale with dexterity or lu
 
 Once stable, the Knight branch will expand into multi-enemy battles and boss duels.
 
+
+📜 Changelog
+v0.3a — “Steel and Potion” Update (Current)
+
+Added potion usage in and out of combat with persistent healing.
+
+Implemented item ID deduplication system.
+
+Added Goblin gear randomization and 40% potion drop chance.
+
+Rebalanced Knight’s early-game STR scaling.
+
+Stable, persistence-safe build with all core systems functional.
+
+v0.2b — “Persistence and Progression”
+
+Added Zustand persistent store with localStorage.
+
+Introduced XP system and level-up mechanics.
+
+Enabled battle restart and save/load continuity.
+
+Fixed early duplication and registry bugs.
+
+v0.1a — “Prototype Combat Demo”
+
+Basic turn-based Knight vs. Goblin loop.
+
+Introduced RNG-based attack variance.
+
+Initial UI mockup with attack and new game buttons.
+
+
+
 Developed by Joshua Balao
 "The dungeon remembers your steps — whether you return stronger or weaker is up to you."
