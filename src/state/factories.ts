@@ -146,7 +146,7 @@ export function makeGoblin( id=1): Actor {
 
 
 
-    const weaponPool = [ 'goblin-club', 'wooden-club', 'iron-dagger', 'iron-shortsword' ];
+    const weaponPool = [ 'goblin-club', 'wooden-club', 'iron-dagger', 'goblin-shortsword' ];
     const wCode = weaponPool[Math.floor(Math.random() * weaponPool.length)];
     a.equipment!.weapon = makeItemFromCode(wCode);
 

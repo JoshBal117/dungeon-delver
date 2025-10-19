@@ -3,6 +3,19 @@ import { rng } from './rng';
 import type { Actor } from './types';
 import { getTotalArmor, computeLinearMitigation } from './armor';
 
+function computeRawPhysicalDamage(attacker: Actor): number {
+  const weaponBase = attacker.equipment?.weapon?.mods?.damage ?? 2;
+  const strBonus   = (attacker.base.str ?? 0) * 0.5;
+  return weaponBase + strBonus; 
+}
+
+function applyMitigationToRaw( raw: number, defender: Actor): number{
+  const totalArmor = getTotalArmor(defender);
+  const mit        = computeLinearMitigation(totalArmor);
+  const after      = raw * (1 -mit);
+  return Math.max(1, Math.floor(after));
+}
+
 /** Weapon-based damage with STR addition and linear armor mitigation. */
 export function dealPhysicalDamage(attacker: Actor, defender: Actor): number {
   const weaponBase = attacker.equipment?.weapon?.mods?.damage ?? 2; // unarmed ~= 2
@@ -11,8 +24,19 @@ export function dealPhysicalDamage(attacker: Actor, defender: Actor): number {
 
   const totalArmor = getTotalArmor(defender);
   const mit        = computeLinearMitigation(totalArmor); // 0..0.60
-
   const mitigated  = raw * (1 - mit);
+
+   console.log('[DMG/Armor]', {
+    atk: attacker.name,
+    def: defender.name,
+    weaponBase,
+    strBonus,
+    raw,
+    totalArmor,
+    mitigationPct: Math.round(mit * 100),          // e.g., 24 => 24%
+    prevented: +(raw - mitigated).toFixed(2),      // raw damage shaved off by armor
+    afterArmor: +mitigated.toFixed(2),
+  });
 
   return Math.max(1, Math.floor(mitigated));
 }
@@ -83,34 +107,62 @@ export type AttackResult = {
   logLine: string;      // full log text ready to append
 };
 
-export function performAttack(attacker: Actor, defender: Actor): AttackResult {
-  const toHit = computeHitChance(attacker, defender);
+function critPhraseForWeapon(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes('sword') || lower.includes('axe') || lower.includes('katana')) return 'Devastating Slash';
+  if (lower.includes('dagger') || lower.includes('stiletto') || lower.includes('rapier') || lower.includes('tanto')) return 'Precise Stab';
+  if (lower.includes('spear') || lower.includes('lance') || lower.includes('arrow')) return 'Piercing Strike';
+  if (lower.includes('mace') || lower.includes('club') || lower.includes('hammer')) return 'Crushing Blow';
+  if (lower.includes('staff')) return 'Arcane Strike';
+  if (lower.includes('bow') || lower.includes('crossbow')) return 'Perfect Shot';
+  return 'Powerful Hit';
+}
 
+
+export function performAttack(attacker: Actor, defender: Actor): AttackResult {
+  // 1) to-hit gate
+  const toHit = computeHitChance(attacker, defender);
   if (!rollPct(toHit)) {
     const weaponName = getWeaponName(attacker);
     const logLine = `${attacker.name} misses ${defender.name}${weaponName === 'Fists' ? '' : ` with ${weaponName}`}.`;
     return { hit: false, crit: false, dmg: 0, verb: 'misses', weaponName, logLine };
   }
 
-  // Hit
-  let dmg = dealPhysicalDamage(attacker, defender);
+  // 2) baseline damage (non-crit)
+  const raw          = computeRawPhysicalDamage(attacker);
+  const nonCritBase  = applyMitigationToRaw(raw, defender);
+  const nonCritFinal = Math.max(1, nonCritBase + rng.int(-2, 2)); // −2..+2 variance
 
-  // Small variance (-2..+2) on hit
-  dmg = Math.max(1, dmg + rng.int(-2, 2));
-
-  // Crit?
+  // 3) crit roll and crit branch (multiply BEFORE mitigation)
   const isCrit = rollPct(computeCritChance(attacker));
-  if (isCrit) dmg = Math.max(1, Math.floor(dmg * CRIT_MULT));
+  let dmg      = nonCritFinal;
 
+  if (isCrit) {
+    const critRaw   = raw * CRIT_MULT;
+    const critBase  = applyMitigationToRaw(critRaw, defender);
+    const critFinal = Math.max(2, critBase + rng.int(0, 2)); // non-negative variance for crits
+    dmg = Math.max(critFinal, nonCritFinal + 1);             // ensure crit > non-crit
+  }
+
+  // 4) narration, after we know crit + dmg
   const weaponName = getWeaponName(attacker);
-  const verb = verbFromWeaponName(weaponName);
+  const verb       = verbFromWeaponName(weaponName);
 
-  const logLine = isCrit
-    ? `Critical! ${attacker.name} ${verb} ${defender.name} with ${weaponName} for ${dmg} damage!`
-    : `${attacker.name} ${verb} ${defender.name} with ${weaponName} for ${dmg} damage.`;
+  // Optional: debug
+  // console.log('[HIT]', { atk: attacker.name, def: defender.name, isCrit, nonCritFinal, final: dmg });
+
+  let logLine: string;
+  if (isCrit) {
+    const phrase = critPhraseForWeapon(weaponName);
+    const lead   = attacker.isPlayer ? 'unleashes' : 'lands';
+    logLine = `Critical Hit! ${attacker.name} ${lead} a ${phrase} on ${defender.name} with ${weaponName}, dealing ${dmg} damage!`;
+  } else {
+    logLine = `${attacker.name} ${verb} ${defender.name} with ${weaponName} for ${dmg} damage.`;
+  }
 
   return { hit: true, crit: isCrit, dmg, verb, weaponName, logLine };
 }
+
 
 // --- shared resource helpers (unchanged) ---
 export function clampResource(v: number, max: number) {
