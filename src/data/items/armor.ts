@@ -40,6 +40,7 @@ export const ARMOR: ItemTemplate[] = [
   { code: 'steel-knight-gauntlets', name: 'Steel Knight Gauntlets', type: 'armor', slot: 'gauntlets', rarity: 'rare', mods: { armor: 3 } },
   { code: 'steel-knight-greaves', name: 'Steel Knight Greaves', type: 'armor', slot: 'greaves', rarity: 'rare', mods: { armor: 3 } },
   { code: 'steel-knight-boots', name: 'Steel Knight Boots', type: 'armor', slot: 'boots', rarity: 'rare', mods: { armor: 3 } },
+  {code: 'steel-knight-helm', name: 'Steel Knight Helm', type: 'armor', slot: 'helm', rarity: 'rare', mods: { armor: 3 } },
 
   // Steel plate (Paladin start)
   { code: 'steel-plate-cuirass', name: 'Steel Plate Chest Armor', type: 'armor', slot: 'cuirass', rarity: 'rare', mods: { armor: 4 } },

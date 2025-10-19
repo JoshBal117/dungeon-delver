@@ -1,5 +1,6 @@
 import { useGame } from '../state/game.ts';
 import type { Item } from '../engine/types';
+import { getTotalArmor, computeLinearMitigation } from '../engine/armor.ts';
 
 export default function CharacterSheet() {
   const { ui, heroes, closeSheet } = useGame();
@@ -15,6 +16,8 @@ export default function CharacterSheet() {
   ] as const;
   type Slot = typeof slots[number];
   const eq: Partial<Record<Slot, Item>> = (a.equipment ?? {}) as Partial<Record<Slot, Item>>;
+  const armorTotal = getTotalArmor(a);
+  const armorMitPct = Math.round(computeLinearMitigation(armorTotal) * 100);
 
   return (
     <div className="container">
@@ -36,6 +39,13 @@ export default function CharacterSheet() {
           <Stat label="RES" v={a.base.resist} />
           <Stat label="LCK" v={a.base.luck} />
         </div>
+
+        {/* Armor summary (from base + gear) */}
+<div className="panel" style={{ padding: 8, marginBottom: 12 }}>
+  <div><b>Total Armor:</b> {armorTotal}</div>
+  <div><b>Mitigation:</b> {armorMitPct}%</div>
+</div>
+
 
         {/* Equipment */}
         <h3 style={{ marginTop: 12, marginBottom: 6 }}>Equipment</h3>

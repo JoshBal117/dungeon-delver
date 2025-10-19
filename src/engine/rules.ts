@@ -1,5 +1,6 @@
 // src/engine/rules.ts
 import type { Actor } from './types';
+import { getTotalArmor, computeLinearMitigation } from './armor';
 
 // ---- Tunables ----
 /**const STR_BONUS_PER_POINT = 0.05; // 5% per STR
@@ -9,23 +10,7 @@ const ARMOR_K = 10;               // bigger => armor stronger
 */
 // ---- Functions ----
 
-function totalArmor( a:Actor): number {
-  const base = a.base.armor;
-  const eq = a.equipment ?? {};
-//add armor rating from any equippmed peices
-  
- const add =
-    (eq.helm?.mods?.armor ?? 0) +
-    (eq.cuirass?.mods?.armor ?? 0) +
-    (eq.gauntlets?.mods?.armor ?? 0) +
-    (eq.greaves?.mods?.armor ?? 0) +
-    (eq.boots?.mods?.armor ?? 0) +
-    (eq.shield?.mods?.armor ?? 0) +
-    (eq.robe?.mods?.armor ?? 0) +
-    (eq.circlet?.mods?.armor ?? 0);
-    //going to be adding this together  as a possible percentage later
-      return Math.max(0, base + add);
-}
+
 
 /**function getWeaponBaseDamage(attacker: Actor): number {
   const w = attacker.equipment?.weapon;
@@ -61,12 +46,23 @@ export function dealPhysicalDamage(attacker: Actor, defender: Actor): number {
 
   const raw = weaponBase + strBonus;
 
-  // Softer armor curve (A=0 => 1.0; A=10 => ~0.67; A=20 => 0.5 ...)
-  const A = totalArmor(defender);
-  const mitigated = raw * (1 - A / (A + 20));
+  // Simple linear mitigation: each armor point ~2% up to 60%
+  const total = getTotalArmor(defender);
+  const mit   = computeLinearMitigation(total); // 0..0.60 by default
+
+  const mitigated = raw * (1 - mit);
+  console.log('DMG', {
+  attacker: attacker.name,
+  defender: defender.name,
+  raw,
+  totalArmor: getTotalArmor(defender),
+  mitigationPct: Math.round((mit) * 100),
+  final: Math.max(1, Math.floor(mitigated)),
+});
 
   return Math.max(1, Math.floor(mitigated));
 }
+
 
 
 

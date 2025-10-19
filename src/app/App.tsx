@@ -115,9 +115,6 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
           <span>Lv {a.level}</span>{' '}
           <span>HP {a.hp.current}/{a.hp.max}</span>{' '}
           {a.tags?.spellcaster ? <span> | MP {a.mp.current}/{a.mp.max}</span> : null}
-          <div className="statline">
-            SPD {a.base.speed} | STR {a.base.str} | ARM {a.base.armor}
-          </div>
           {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
         </div>
       ))}
@@ -126,15 +123,30 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
 }
 
 function XPBar({ xp, xpToNext }: { xp: number; xpToNext: number }) {
-  const pct = Math.max(0, Math.min(100, Math.floor((xp / xpToNext) * 100)));
+  // guard against divide-by-zero and clamp to [0,100]
+  const denom = Math.max(1, xpToNext);
+  const pct = Math.max(0, Math.min(100, Math.floor((xp / denom) * 100)));
+
   return (
     <div style={{ width: 160, marginTop: 4 }}>
       <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 2 }}>
         XP {xp}/{xpToNext}
       </div>
-      <div style={{ height: 8, background: '#222', border: '1px solid #333' }}>
-        <div style={{ width: `${pct}%`, height: '100%' }} />
+      <div style={{
+        height: 8,
+        background: '#222',
+        border: '1px solid #333',
+        borderRadius: 4,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${pct}%`,
+          height: '100%',
+          background: '#24c24a',          // ✅ green fill
+          transition: 'width 250ms linear'
+        }} />
       </div>
     </div>
   );
 }
+

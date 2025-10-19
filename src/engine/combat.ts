@@ -3,6 +3,7 @@ import { dealPhysicalDamage, applyDamage } from './rules';
 import type { Actor, CombatState } from './types';
 import { makeItemFromCode } from './item-index';
 import { awardXPFromFoes } from './partyXp';
+import { getTotalArmor, computeLinearMitigation } from './armor';
 
 
 export function initCombat(party: Actor[], foes: Actor[]): CombatState {
@@ -51,6 +52,9 @@ export function step(state: CombatState): CombatState {
   const variance = rng.int(-2, 2); // or tighten to (-1, 1)
   const dmg = Math.max(dealPhysicalDamage(actor, target) + variance);
 
+  const totalArmor = getTotalArmor(target);
+  const mit = computeLinearMitigation(totalArmor);
+
   const weapon = actor.equipment?.weapon;
 const wDmg = weapon?.mods?.damage ?? 0;
 console.log('Damage calc', {
@@ -58,7 +62,8 @@ console.log('Damage calc', {
   defender: target.name,
   weaponDamage: wDmg,
   STR: actor.base.str,
-  ARM: target.base.armor,
+  totalArmor,
+  mitigationPct: Math.round(mit * 100),
   variance,
   dmg,
   defenderHP_before: `${target.hp.current}/${target.hp.max}`,

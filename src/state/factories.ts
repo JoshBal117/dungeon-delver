@@ -144,8 +144,6 @@ export function makeGoblin( id=1): Actor {
   const mpMax = computeMpMax(a);
   a.hp = {current: hpMax, max: hpMax};
   a.mp = {current: mpMax, max: mpMax};
-   a.inventory = [];
-    a.equipment = {};
     a.gold = 0;
   return a;
 }
