@@ -122,11 +122,11 @@ export function makeGoblin( id=1): Actor {
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: false, humanoid: true, },
     base: {
-      str: 3, dex: 4, int: 1, wis: 1, vit: 5,
+      str: 2, dex: 4, int: 1, wis: 1, vit: 5,
       speed: 3, armor: 0, resist: 0, luck: 2,
     },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
-    hp: { current: 14, max: 14 },
+    hp: { current: 10, max: 10 },
     mp: { current: 0, max: 0 },
 
     equipment: {},

@@ -1,5 +1,5 @@
 // src/engine/types.ts
-
+import type { DamageType } from '../data/types';
 // -------------------------
 // Core Resource Type
 // -------------------------
@@ -7,6 +7,8 @@ export type Resource = { current: number; max: number };
 
 // -------------------------
 // Runtime item types (used by Actor.inventory/equipment)
+
+
 // -------------------------
 export type ItemSlot =
   | 'weapon' | 'shield'
@@ -36,6 +38,7 @@ export interface Item {
   consumable?: boolean;
   onUse?: OnUseCode;
   value?: number;
+  damageType?: DamageType;                 // for weapons
 }
 
 // Equipment object uses two ring slots (ring1, ring2)

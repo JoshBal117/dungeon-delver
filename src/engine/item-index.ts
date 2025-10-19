@@ -2,6 +2,7 @@ import { ITEM_MAP } from '../data/items';
 import type { ItemTemplate } from '../data/types';
 import type { Item } from './types';
 
+
 // Strong unique id generator
 export function newItemId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -34,6 +35,8 @@ export function makeItemFromCode(code: string): Item {
     consumable,
     onUse: (t.onUse ?? 'none') as Item['onUse'],
                        // fine if undefined
+    damageType: t.damageType, // for weapons
+   
   };
 
   return item;
