@@ -32,7 +32,11 @@ export function makeKnight(): Actor {
   a.mp = {current: mpMax, max: mpMax};
    a.inventory = [];
     a.equipment = {};
-    a.gold = 0;
+    a.gold = 50;
+
+  
+
+
   return a;
 
 }

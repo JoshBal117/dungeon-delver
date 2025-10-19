@@ -68,9 +68,11 @@ const ensureBags = (a: Actor): Actor => ({
 
 function giveItemUniqueByCode(a: Actor, item: Item) {
   a.inventory ??= [];
-  if (a.inventory.some(x => x.code === item.code)) return;
+  const isStackable = item.type === 'potion' || item.consumable === true;
+  if (!isStackable && a.inventory.some(x => x.code === item.code)) return; // ← only block non-stackables
   a.inventory.push(item);
 }
+
 
 function dedupeInventory(a: Actor): Actor {
   const seenIds = new Set<string>();
@@ -166,9 +168,37 @@ export const useGame = create<GameStore>()(
   h.inventory ??= [];
 
   if (classId === 'knight') {
-    giveItemUniqueByCode(h, makeItemFromCode('iron-longsword'));
-    giveItemUniqueByCode(h, makeItemFromCode('iron-knight-cuirass'));
-  } else if (classId === 'mage') {
+    const add = (code: string) => giveItemUniqueByCode(h, makeItemFromCode(code));
+    [
+      'iron-longsword',
+    'iron-knight-helm',
+    'iron-knight-cuirass',
+    'iron-knight-gauntlets',
+    'iron-knight-greaves',
+    'iron-knight-boots',
+    'iron-shield',
+    ].forEach(add);
+// Starter potions
+  ['heal-lesser', 'heal-lesser', 'heal-lesser'].forEach(add);
+
+  // Auto-equip from bag by code
+  const equipByCode = (slot: keyof NonNullable<typeof h.equipment>, code: string) => {
+    const it = h.inventory!.find(i => i.code === code);
+    if (!it) return;
+    h.equipment ??= {};
+    h.equipment[slot] = it;
+    h.inventory = h.inventory!.filter(i => i.id !== it.id);
+  };
+
+  equipByCode('weapon',   'iron-longsword');
+  equipByCode('helm',     'iron-knight-helm');
+  equipByCode('cuirass',  'iron-knight-cuirass');   // will be 'body' later if you unify
+  equipByCode('gauntlets','iron-knight-gauntlets');
+  equipByCode('greaves',  'iron-knight-greaves');
+  equipByCode('boots',    'iron-knight-boots');
+  equipByCode('shield',   'iron-shield');
+}
+   else if (classId === 'mage') {
     giveItemUniqueByCode(h, makeItemFromCode('wooden-staff'));
     giveItemUniqueByCode(h, makeItemFromCode('mana_25'));
   } else if (classId === 'thief') {
