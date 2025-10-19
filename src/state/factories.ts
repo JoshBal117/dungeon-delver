@@ -2,6 +2,7 @@ import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
+import { getTotalArmor } from '../engine/armor';
 
 
 export type ClassId = 'knight' | 'mage' | 'thief' | 'cleric';
@@ -127,17 +128,28 @@ export function makeGoblin( id=1): Actor {
     equipment: {},
     inventory: [],
     gold: 0,
-
+      
   };
   
+    console.log('Goblin created:', {
+  id: a.id,
+  weapon: a.equipment?.weapon?.name,
+  cuirass: a.equipment?.cuirass?.name,
+  boots: a.equipment?.boots?.name,
+  helm: a.equipment?.helm?.name,
+  totalArmor: getTotalArmor(a),
+});
+
+
+
     const weaponPool = [ 'goblin-club', 'wooden-club', 'iron-dagger', 'iron-shortsword' ];
     const wCode = weaponPool[Math.floor(Math.random() * weaponPool.length)];
     a.equipment!.weapon = makeItemFromCode(wCode);
 
     //light armor percentage chance
     if (Math.random() < 0.60) a.equipment!.cuirass  =  makeItemFromCode('goblin-loincloth');
-    if (Math.random() < 0.40) a.equipment!.boots    =  makeItemFromCode('hide-gauntlets');
-
+    if (Math.random() < 0.40) a.equipment!.boots    =  makeItemFromCode('goblin-leather-boots');
+    if (Math.random() < 0.30) a.equipment!.helm    = makeItemFromCode('goblin-hide-helm'); 
   
 
   const hpMax = computeHpMax(a);

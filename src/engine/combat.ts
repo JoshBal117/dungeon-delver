@@ -69,6 +69,18 @@ console.log('Damage calc', {
   defenderHP_before: `${target.hp.current}/${target.hp.max}`,
 });
 
+console.log('DEF ARMOR DEBUG', {
+  name: target.name,
+  equipped: {
+    helm: target.equipment?.helm?.code,
+    cuirass: target.equipment?.cuirass?.code,
+    gauntlets: target.equipment?.gauntlets?.code,
+    greaves: target.equipment?.greaves?.code,
+    boots: target.equipment?.boots?.code,
+    shield: target.equipment?.shield?.code,
+  },
+  totalArmor: getTotalArmor(target)
+});
 
   applyDamage(target, dmg);
 
