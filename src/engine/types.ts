@@ -7,7 +7,11 @@ export type Resource = { current: number; max: number };
 
 // -------------------------
 // Runtime item types (used by Actor.inventory/equipment)
-
+export type AIAction = 
+  | {kind: 'attack';                       targetId: string}
+  | {kind: 'ability'; abilityCode: string; targetId: string}
+  | {kind: 'defend'}
+  | {kind: 'use-item'; itemId: string;     targetId: string}
 
 // -------------------------
 export type ItemSlot =

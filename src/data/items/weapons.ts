@@ -40,7 +40,7 @@ export const WEAPONS: ItemTemplate[] = [
   { code: 'iron-war-axe', name: 'Iron War Axe', type: 'weapon', slot: 'weapon', rarity: 'common', hands: 1, damageType: 'slash', basePower: 10, mods: { str: 1 } },
   { code: 'steel-war-axe', name: 'Steel War Axe', type: 'weapon', slot: 'weapon', rarity: 'uncommon', hands: 1, damageType: 'slash', basePower: 14, mods: { str: 1 } },
 
-
+  //Spears/lances/Javelins 
 
   // Great weapons (2-hand)
   { code: 'iron-greatsword', name: 'Greatsword', type: 'weapon', slot: 'weapon', rarity: 'uncommon', hands: 2, damageType: 'slash', basePower: 12, mods: { str: 2 } },

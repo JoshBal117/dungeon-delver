@@ -3,12 +3,19 @@ import { performAttack, applyDamage } from './rules';
 import type { Actor, CombatState } from './types';
 import { makeItemFromCode } from './item-index';
 import { awardXPFromFoes } from './partyXp';
+import { decideAction } from './ai'
 
 
 
 export function initCombat(party: Actor[], foes: Actor[]): CombatState {
   const all = [...party, ...foes];
-  const order = [...all].sort((a, b) => b.base.speed - a.base.speed).map(a => a.id);
+  const order = [...all]
+      .sort((a, b) => {
+        if (b.base.speed ! == a.base.speed) return b.base.speed - a.base.speed;
+        if (b.base.dex   ! == a.base.dex)   return b.base.dex   - a.base.dex;  
+        return a.id.localeCompare(b.id)
+      })
+        .map(a => a.id);
 
   return {
     turn: 0,
@@ -16,8 +23,13 @@ export function initCombat(party: Actor[], foes: Actor[]): CombatState {
     actors: Object.fromEntries(all.map(a => [a.id, a])),
     log: [{ text: 'Battle begins!' }],
     over: false,
+
+    
   };
+
 }
+
+
 
 export function step(state: CombatState): CombatState {
   if (state.over) return state;
@@ -25,27 +37,35 @@ export function step(state: CombatState): CombatState {
   const id = state.order[state.turn % state.order.length];
   const actor = state.actors[id];
 
-  const target = Object.values(state.actors).find(
-    a => a.isPlayer !== actor.isPlayer && a.hp.current > 0
-  );
+ 
+// --- Decide action via AI ---
+const action = decideAction(state, actor);
 
-  if (!target) {
-    const partyAlive = Object.values(state.actors).some(a => a.isPlayer && a.hp.current > 0);
-    let log = [...state.log];
+if (action.kind === 'defend') {
+  const newLog = [...state.log, { text: `${actor.name} takes a defensive stance.` }];
+  return { ...state, log: newLog, turn: state.turn + 1 };
+}
 
-    if (partyAlive) {
-      const heroes = Object.values(state.actors).filter(a => a.isPlayer);
-      const foes   = Object.values(state.actors).filter(a => !a.isPlayer);
-      const xpMsgs = awardXPFromFoes(heroes, foes);
-      log = [...log, { text: 'Victory!' }, ...xpMsgs.map(text => ({ text }))];
-    } else {
-      log.push({ text: 'Defeat…' });
-    }
-    return { ...state, over: true, log };
-  }
+if (action.kind === 'use-item') {
+  const newLog = [...state.log, { text: `${actor.name} fumbles with an item (not implemented).` }];
+  return { ...state, log: newLog, turn: state.turn + 1 };
+}
 
-  // --- Attack roll ---
-  const result = performAttack(actor, target);
+if (action.kind === 'ability') {
+  const newLog = [...state.log, { text: `${actor.name} uses ${action.abilityCode} (not implemented).` }];
+  return { ...state, log: newLog, turn: state.turn + 1 };
+}
+
+// kind === 'attack'
+const target = state.actors[action.targetId];
+if (!target || target.hp.current <= 0) {
+  const newLog = [...state.log, { text: `${actor.name} hesitates...` }];
+  return { ...state, log: newLog, turn: state.turn + 1 };
+}
+
+// --- Attack roll ---
+const result = performAttack(actor, target);
+
 
   if (!result.hit) {
     // Inline the return so no unused variable warning
@@ -98,4 +118,33 @@ const newLog = [
   const finalLog = over ? [...newLog, { text: foesAliveAfter ? 'Defeat…' : 'Victory!' }] : newLog;
 
   return { ...state, log: finalLog, over, turn: state.turn + 1 };
+}
+
+/* --------------------------
+   Helpers to enable auto-AI
+   -------------------------- */
+
+// Who acts next?
+export function currentActor(state: CombatState): Actor {
+  const id = state.order[state.turn % state.order.length];
+  return state.actors[id];
+}
+
+function wait(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/** Async version: pause between AI turns. */
+export async function stepUntilPlayerAsync(state: CombatState, delayMs = 1000): Promise<CombatState> {
+  let s = state;
+  while (!s.over) {
+    const a = currentActor(s);
+    if (!a || a.isPlayer) break;
+
+    // Delay before the AI acts
+    await wait(delayMs);
+
+    s = step(s);
+  }
+  return s;
 }

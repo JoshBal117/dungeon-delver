@@ -1,13 +1,14 @@
-// src/state/gamestats.ts
+// src/state/games.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CombatState, Actor, Item } from '../engine/types';
-import { initCombat, step } from '../engine/combat';
+import { initCombat, step, stepUntilPlayerAsync } from '../engine/combat';
 import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './factories';
 import type { ClassId } from './factories';
 import { computeHpMax, computeMpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
 import { newItemId } from '../engine/item-index';
+
 
 // Screens for a tiny UI state machine
 type UIScreen = 'title' | 'battle' | 'sheet';
@@ -21,12 +22,12 @@ type GameStore = {
   ui: { screen: UIScreen; selectID?:string };
 
 
-  startNewCombat: () => void;
-  attack: () => void;
+  startNewCombat: () => Promise<void>;
+  attack: () => Promise<void>;
   setHeroes: (h: Actor[]) => void;
   newGame: () => void;
   goToTitle: () => void;
-  startNewRun: (classId: ClassId) => void;
+  startNewRun: (classId: ClassId) => Promise<void>;
   hasSave: () => boolean;
 
   //character page
@@ -143,16 +144,27 @@ export const useGame = create<GameStore>()(
         ui: { screen: 'title' },
 
         // --- actions ---
-        startNewCombat: () => set({ combat: rebuildCombat(get().heroes) }),
-        attack: () => set({ combat: step(get().combat) }),
+        startNewCombat: async () => {
+  const s0 = rebuildCombat(get().heroes);
+  set ({combat: s0})
+  const s1 = await stepUntilPlayerAsync(s0, 3000);
+  set({ combat: s1 });
+},
+
+attack: async () => {
+  const afterPlayer = step(get().combat);
+  set ({combat: afterPlayer})      // Player acts
+  const afterAI = await stepUntilPlayerAsync(afterPlayer, 3000);     // Then AI resolves its turns
+  set({ combat: afterAI });
+},
         setHeroes: (h) => set({ heroes: h.map(ensurePools).map(ensureBags).map(dedupeInventory) }),
 
         // NEW: delegate to startNewRun so seeding happens in one place
-        newGame: () => get().startNewRun('knight'),
+        newGame: () => {void get().startNewRun('knight'); },
 
         goToTitle: () => set({ ui: { screen: 'title' } }),
 
-       startNewRun: (classId: ClassId) => {
+       startNewRun: async (classId: ClassId) => {
   if (get().ui.screen !== 'title') return;   // guard against double clicks
 
  
@@ -209,7 +221,11 @@ export const useGame = create<GameStore>()(
     giveItemUniqueByCode(h, makeItemFromCode('heal_25'));
   }
   
-  set({ heroes, combat: rebuildCombat(heroes), ui: { screen: 'battle' } });
+  //set initial battle, then autoplay AI until it's the player's turn
+  const s0 = rebuildCombat(heroes);
+  set({heroes, combat: s0, ui: {screen: 'battle'} });
+const s1 = await stepUntilPlayerAsync(s0);
+set({combat: s1});
 },
 
         hasSave: () => {
@@ -325,15 +341,26 @@ export const useGame = create<GameStore>()(
       version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ heroes: s.heroes }),
+
+      // ✅ rehydrate path can't be truly async; do two-phase update:
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const fixed = state.heroes.map(ensurePools).map(ensureBags).map(dedupeInventory);
+        const base = rebuildCombat(fixed);
         const hasSave = fixed.length && ((fixed[0].level ?? 1) > 1 || (fixed[0].xp ?? 0) > 0);
+
+        // 1) Set immediate state
         useGame.setState({
           heroes: fixed,
-          combat: rebuildCombat(fixed),
+          combat: base,
           ui: { screen: hasSave ? 'battle' : 'title' }
         });
+
+        // 2) Kick off async AI pass without blocking rehydrate
+        (async () => {
+          const s1 = await stepUntilPlayerAsync(base, 3000);
+          useGame.setState({ combat: s1 });
+        })();
       },
     }
   )
