@@ -3,6 +3,12 @@ import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
 import TitleScreen from './TitleScreen';
 import CharacterSheet from './CharacterSheet';
+import {getSpriteFor} from '../assets/sprites';
+
+
+
+
+
 
 export default function App() {
   const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet } = useGame();
@@ -86,6 +92,53 @@ export default function App() {
           <Party title="Heroes" list={players} />
           <Party title="Foes" list={foes} />
         </section>
+
+         {/* 🆕 Battlefield sprites go here */}
+      <div
+        className="battlefield"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 24,
+          alignItems: 'end',
+          minHeight: 220,
+          padding: 16,
+          marginBottom: 16,
+          background: 'linear-gradient(#1a1d22, #0f1115)',
+          border: '1px solid #23262b',
+          borderRadius: 8,
+        }}
+      >
+        {/* Player side (left) */}
+        <div style={{ display: 'flex', alignItems: 'end', height: 200 }}>
+          {players[0] && (
+            <img
+              src={getSpriteFor(players[0])}
+              alt={players[0].name}
+              width={128}
+              height={128}
+              style={{ imageRendering: 'pixelated' }}
+            />
+          )}
+        </div>
+
+        {/* Enemy side (right) */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, alignItems: 'end', height: 200 }}>
+          {foes.map((f) => (
+            <img
+              key={f.id}
+              src={getSpriteFor(f)}
+              alt={f.name}
+              width={96}
+              height={96}
+              style={{
+                imageRendering: 'pixelated',
+                filter: f.hp.current <= 0 ? 'grayscale(100%) opacity(55%)' : 'none',
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
         <div className="buttons">
           <button onClick={attack} disabled={combat.over}>Attack</button>

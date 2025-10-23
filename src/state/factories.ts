@@ -12,6 +12,7 @@ export function makeKnight(): Actor {
     id: 'hero',
     name: 'Knight',
     isPlayer: true,
+    
     level: 1,
     xp: 0,
     xpToNext: xpToNextLevel(1),
@@ -117,6 +118,7 @@ export function makeGoblin( id=1): Actor {
     id: `gob-${id}`,
     name: 'Goblin',
     isPlayer: false,
+   
     level: 1,
     xp: 0,
     xpToNext: xpToNextLevel(1),
@@ -134,26 +136,28 @@ export function makeGoblin( id=1): Actor {
     gold: 0,
       
   };
-  
-    console.log('Goblin created:', {
-  id: a.id,
-  weapon: a.equipment?.weapon?.name,
-  cuirass: a.equipment?.cuirass?.name,
-  boots: a.equipment?.boots?.name,
-  helm: a.equipment?.helm?.name,
-  totalArmor: getTotalArmor(a),
-});
-
 
 
     const weaponPool = [ 'goblin-club', 'wooden-club', 'iron-dagger', 'goblin-shortsword' ];
     const wCode = weaponPool[Math.floor(Math.random() * weaponPool.length)];
     a.equipment!.weapon = makeItemFromCode(wCode);
 
-    //light armor percentage chance
-    if (Math.random() < 0.60) a.equipment!.cuirass  =  makeItemFromCode('goblin-loincloth');
-    if (Math.random() < 0.40) a.equipment!.boots    =  makeItemFromCode('goblin-leather-boots');
-    if (Math.random() < 0.30) a.equipment!.helm    = makeItemFromCode('goblin-hide-helm'); 
+    // --- equip weapon/armor ---
+(a.equipment ??= {}).weapon  = makeItemFromCode(wCode);
+if (Math.random() < 0.60) (a.equipment ??= {}).cuirass = makeItemFromCode('goblin-loincloth');
+if (Math.random() < 0.40) (a.equipment ??= {}).boots   = makeItemFromCode('goblin-leather-boots');
+if (Math.random() < 0.30) (a.equipment ??= {}).helm    = makeItemFromCode('goblin-hide-helm');
+
+// --- debug AFTER equip ---
+console.log('Goblin created:', {
+  id: a.id,
+  weapon:  a.equipment?.weapon?.name  ?? a.equipment?.weapon?.code,
+  cuirass: a.equipment?.cuirass?.name ?? a.equipment?.cuirass?.code,
+  boots:   a.equipment?.boots?.name   ?? a.equipment?.boots?.code,
+  helm:    a.equipment?.helm?.name    ?? a.equipment?.helm?.code,
+  totalArmor: getTotalArmor(a),
+});
+
   
 
   const hpMax = computeHpMax(a);
@@ -161,6 +165,10 @@ export function makeGoblin( id=1): Actor {
   a.hp = {current: hpMax, max: hpMax};
   a.mp = {current: mpMax, max: mpMax};
     a.gold = 0;
+
+    
+
+
   return a;
 }
 

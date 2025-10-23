@@ -111,6 +111,8 @@ export type Actor = {
   inventory?: Item[];
   equipment?: Equipment;
   gold?: number;
+
+  sprite?: string;
 };
 
 // -------------------------
