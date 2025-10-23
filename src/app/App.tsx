@@ -9,7 +9,6 @@ import {getSpriteFor} from '../assets/sprites';
 
 
 
-
 export default function App() {
   const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet } = useGame();
   const savedRef = useRef(false);
@@ -82,6 +81,7 @@ export default function App() {
   const players = actors.filter(a => a.isPlayer);
   const foes = actors.filter(a => !a.isPlayer);
 
+ 
   return (
     <>
       <Header />
@@ -109,9 +109,11 @@ export default function App() {
           borderRadius: 8,
         }}
       >
+
         {/* Player side (left) */}
         <div style={{ display: 'flex', alignItems: 'end', height: 200 }}>
           {players[0] && (
+            
             <img
               src={getSpriteFor(players[0])}
               alt={players[0].name}
@@ -124,6 +126,7 @@ export default function App() {
 
         {/* Enemy side (right) */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, alignItems: 'end', height: 200 }}>
+        
           {foes.map((f) => (
             <img
               key={f.id}

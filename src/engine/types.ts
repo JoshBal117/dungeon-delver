@@ -112,7 +112,7 @@ export type Actor = {
   equipment?: Equipment;
   gold?: number;
 
-  sprite?: string;
+
 };
 
 // -------------------------
