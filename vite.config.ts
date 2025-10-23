@@ -5,5 +5,5 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   publicDir: 'public',
-  base: '/dungeon-delver',
+  base: '/dungeon-delver/',
 })
