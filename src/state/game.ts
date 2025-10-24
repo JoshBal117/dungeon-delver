@@ -10,6 +10,8 @@ import { makeItemFromCode } from '../engine/item-index';
 import { newItemId } from '../engine/item-index';
 
 
+const ENEMY_DELAY_MS = 1000
+
 // Screens for a tiny UI state machine
 type UIScreen = 'title' | 'battle' | 'sheet';
 
@@ -147,14 +149,14 @@ export const useGame = create<GameStore>()(
         startNewCombat: async () => {
   const s0 = rebuildCombat(get().heroes);
   set ({combat: s0})
-  const s1 = await stepUntilPlayerAsync(s0, 3000);
+  const s1 = await stepUntilPlayerAsync(s0, ENEMY_DELAY_MS);
   set({ combat: s1 });
 },
 
 attack: async () => {
   const afterPlayer = step(get().combat);
   set ({combat: afterPlayer})      // Player acts
-  const afterAI = await stepUntilPlayerAsync(afterPlayer, 3000);     // Then AI resolves its turns
+  const afterAI = await stepUntilPlayerAsync(afterPlayer, ENEMY_DELAY_MS);     // Then AI resolves its turns
   set({ combat: afterAI });
 },
         setHeroes: (h) => set({ heroes: h.map(ensurePools).map(ensureBags).map(dedupeInventory) }),
@@ -224,7 +226,7 @@ attack: async () => {
   //set initial battle, then autoplay AI until it's the player's turn
   const s0 = rebuildCombat(heroes);
   set({heroes, combat: s0, ui: {screen: 'battle'} });
-const s1 = await stepUntilPlayerAsync(s0);
+const s1 = await stepUntilPlayerAsync(s0, ENEMY_DELAY_MS);
 set({combat: s1});
 },
 
@@ -358,7 +360,7 @@ set({combat: s1});
 
         // 2) Kick off async AI pass without blocking rehydrate
         (async () => {
-          const s1 = await stepUntilPlayerAsync(base, 3000);
+          const s1 = await stepUntilPlayerAsync(base, ENEMY_DELAY_MS);
           useGame.setState({ combat: s1 });
         })();
       },
