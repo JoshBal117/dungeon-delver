@@ -4,6 +4,7 @@ import type { Actor, LogEvent } from '../engine/types';
 import TitleScreen from './TitleScreen';
 import CharacterSheet from './CharacterSheet';
 import {getSpriteFor} from '../assets/sprites';
+import StartScreen from './StartScreen.tsx';
 
 
 
@@ -50,6 +51,16 @@ export default function App() {
   }, [combat, setHeroes, startNewCombat]);
 
   // --- UI routing ---
+    // NEW start/intro screen
+ if ( ui.screen === 'start') {
+    return (
+      <>
+        <Header />
+        <StartScreen />
+      </>
+    );
+ } 
+
   if (ui.screen === 'title') {
     return (
       <>

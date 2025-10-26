@@ -13,7 +13,7 @@ import { newItemId } from '../engine/item-index';
 const ENEMY_DELAY_MS = 1000
 
 // Screens for a tiny UI state machine
-type UIScreen = 'title' | 'battle' | 'sheet';
+type UIScreen = 'start' | 'title' | 'battle' | 'sheet';
 
 // Class ids (framework for future characters)
 
@@ -29,6 +29,8 @@ type GameStore = {
   setHeroes: (h: Actor[]) => void;
   newGame: () => void;
   goToTitle: () => void;
+  goToStart: () => void;
+  goToClassSelect: () => void;
   startNewRun: (classId: ClassId) => Promise<void>;
   hasSave: () => boolean;
 
@@ -143,7 +145,7 @@ export const useGame = create<GameStore>()(
         // --- state ---
         heroes: starter,
         combat: rebuildCombat(starter),
-        ui: { screen: 'title' },
+        ui: { screen: 'start' },
 
         // --- actions ---
         startNewCombat: async () => {
@@ -164,7 +166,9 @@ attack: async () => {
         // NEW: delegate to startNewRun so seeding happens in one place
         newGame: () => {void get().startNewRun('knight'); },
 
-        goToTitle: () => set({ ui: { screen: 'title' } }),
+        goToTitle:      () => set({ ui: { screen: 'start' } }),
+        goToStart:      () => set({ ui: { screen: 'start' } }),
+        goToClassSelect: () => set({ ui: { screen: 'title' } }),
 
        startNewRun: async (classId: ClassId) => {
   if (get().ui.screen !== 'title') return;   // guard against double clicks
@@ -355,7 +359,7 @@ set({combat: s1});
         useGame.setState({
           heroes: fixed,
           combat: base,
-          ui: { screen: hasSave ? 'battle' : 'title' }
+          ui: { screen: hasSave ? 'battle' : 'start' }
         });
 
         // 2) Kick off async AI pass without blocking rehydrate
