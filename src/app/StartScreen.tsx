@@ -35,15 +35,11 @@ export default function StartScreen() {
         <h1 style={{ marginTop: 0, marginBottom: 12, fontSize: 28 }}>Dungeon Delver — v0.4a.a</h1>
 
         <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
-          A tiny tactical RPG prototype. Battles are turn-based with visible math: hit/miss, armor
-          mitigation, and crits. Enemies act automatically in initiative order. If a foe is faster than
-          you, they may take the first swing.
+          Welcome to my prototype game called Dungeon Delver. Here in this beginning game, you will help me test and provide feedback about the current features. This is a turn based combat system, it also incorperates a hit/miss chance mechanic as well as a Critical Hit chance as well. The enemies you face will automatically attack after your own attack, and if the enemy is faster than your character, they will go first.
         </p>
 
         <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
-          What to test now: basic combat flow, damage logs, and the new battle sprites. The class
-          selector currently offers the <strong>Knight</strong> only. Press <strong>Start</strong> to
-          choose your hero and begin. More features will arrive with future updates.
+          What you are testing now: the basic combat flow as you take turns with the simple battle mechanics, and you will see the damage logs, and the newly added battle sprites. The class selector currently offers the <strong>Knight</strong> only. Press <strong>Start</strong> to choose your hero and begin. More features will arrive with future updates.
         </p>
 
         <div
@@ -56,13 +52,12 @@ export default function StartScreen() {
             fontSize: 14,
           }}
         >
-          Roadmap: more enemy types and gear, abilities for heroes/monsters, multi-enemy skirmishes,
-          an actual dungeon crawl loop, and the first story reveal.
+          Roadmap: more enemy types and gear, abilities for heroes/monsters, multi-enemy skirmishes, Magic system and characters who use magic as well as several more characters to play as; and an actual dungeon crawl loop, and the first story reveal.
         </div>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 18 }}>
           <button onClick={goToClassSelect} style={{ padding: '10px 18px', fontSize: 16 }}>
-            Start — Knight
+            Start — Game
           </button>
           <span style={{ alignSelf: 'center', opacity: 0.75 }}>(Press Enter)</span>
         </div>
