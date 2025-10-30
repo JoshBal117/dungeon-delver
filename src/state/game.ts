@@ -15,17 +15,27 @@ const ENEMY_DELAY_MS = 1000
 // Screens for a tiny UI state machine
 type UIScreen = 'start' | 'title' | 'battle' | 'sheet';
 
+type BattleMenu = 'closed' | 'root' | 'abilities' | 'items'
+
 // Class ids (framework for future characters)
 
 
 type GameStore = {
   heroes: Actor[];
   combat: CombatState;
-  ui: { screen: UIScreen; selectID?:string };
+  ui: { screen: UIScreen; selectID?:string; battleMenu?: BattleMenu };
 
 
   startNewCombat: () => Promise<void>;
   attack: () => Promise<void>;
+
+  //new actions
+  defend: () => Promise<void>;
+  openActionMenu: () => void;
+  closeActionMenu: () => void;
+  openItemsMenu: () => void;
+  openAbilitiesMenu: () => void;
+
   setHeroes: (h: Actor[]) => void;
   newGame: () => void;
   goToTitle: () => void;
@@ -145,22 +155,38 @@ export const useGame = create<GameStore>()(
         // --- state ---
         heroes: starter,
         combat: rebuildCombat(starter),
-        ui: { screen: 'start' },
+        ui: { screen: 'start', battleMenu: 'closed' },
 
         // --- actions ---
-        startNewCombat: async () => {
+openActionMenu: () => set({ ui: { ...get().ui, battleMenu: 'root' } }),
+closeActionMenu: () => set({ ui: { ...get().ui, battleMenu: 'closed' } }),
+openItemsMenu: () => set({ ui: { ...get().ui, battleMenu: 'items' } }),
+openAbilitiesMenu: () => set({ ui: { ...get().ui, battleMenu: 'abilities' } }),
+
+// Simple "Defend": log and pass turn to AI
+defend: async () => {
+  const s = get();
+  const combat = { ...s.combat, log: [...s.combat.log, { text: 'Knight braces for impact (Defend).' }] };
+  set({ combat, ui: { ...s.ui, battleMenu: 'closed' } });
+  const afterAI = await stepUntilPlayerAsync(combat, ENEMY_DELAY_MS);
+  set({ combat: afterAI });
+},
+
+// update existing actions to ensure submenu closes when appropriate
+startNewCombat: async () => {
   const s0 = rebuildCombat(get().heroes);
-  set ({combat: s0})
+  set({ combat: s0, ui: { ...get().ui, battleMenu: 'closed' } });
   const s1 = await stepUntilPlayerAsync(s0, ENEMY_DELAY_MS);
   set({ combat: s1 });
 },
 
 attack: async () => {
   const afterPlayer = step(get().combat);
-  set ({combat: afterPlayer})      // Player acts
-  const afterAI = await stepUntilPlayerAsync(afterPlayer, ENEMY_DELAY_MS);     // Then AI resolves its turns
+  set({ combat: afterPlayer, ui: { ...get().ui, battleMenu: 'closed' } }); // close menu
+  const afterAI = await stepUntilPlayerAsync(afterPlayer, ENEMY_DELAY_MS);
   set({ combat: afterAI });
 },
+
         setHeroes: (h) => set({ heroes: h.map(ensurePools).map(ensureBags).map(dedupeInventory) }),
 
         // NEW: delegate to startNewRun so seeding happens in one place
@@ -359,7 +385,7 @@ set({combat: s1});
         useGame.setState({
           heroes: fixed,
           combat: base,
-          ui: { screen: hasSave ? 'battle' : 'start' }
+          ui: { screen: hasSave ? 'battle' : 'start' , battleMenu: 'closed' }
         });
 
         // 2) Kick off async AI pass without blocking rehydrate

@@ -11,7 +11,7 @@ import StartScreen from './StartScreen.tsx';
 
 
 export default function App() {
-  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet } = useGame();
+  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, /*openItemsMenu,*/ openAbilitiesMenu, defend } = useGame();
   const savedRef = useRef(false);
 
   // --- tiny global header ---
@@ -154,13 +154,83 @@ export default function App() {
         </div>
       </div>
 
-        <div className="buttons">
-          <button onClick={attack} disabled={combat.over}>Attack</button>
-          <button onClick={startNewCombat}>New Battle</button>
-          {/* Removed in-body "New Game" — it's now in the header as Reset Save */}
-          {players[0] && <button onClick={() => openSheet(players[0].id)}>Character</button>}
-          {combat.over && <span style={{ marginLeft: 8, color: '#9cf' }}>Battle over</span>}
+       {/* Controls row: left = Action/Inventory, right = New Battle */}
+<div className="buttons" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  {/* Left group */}
+  <div style={{ display: 'flex', gap: 8 }}>
+    {/* Action opens submenu */}
+    <button onClick={openActionMenu} disabled={combat.over}>Action</button>
+    {/* Inventory (renamed from Character for now; still uses your sheet) */}
+    {players[0] && <button onClick={() => openSheet(players[0].id)}>Inventory</button>}
+  </div>
+
+  {/* Right group */}
+  <div style={{ display: 'flex', gap: 8 }}>
+    <button onClick={startNewCombat}>Next Encounter</button>
+    {combat.over && <span style={{ color: '#9cf', alignSelf: 'center' }}>Battle over</span>}
+  </div>
+</div>
+
+{/* Submenu overlay/panel when open */}
+{ui.battleMenu && ui.battleMenu !== 'closed' && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'grid',
+      placeItems: 'center',
+      zIndex: 20
+    }}
+    onClick={closeActionMenu}
+  >
+    <div
+      className="panel"
+      style={{
+        minWidth: 320,
+        padding: 16,
+        border: '1px solid #23262b',
+        borderRadius: 10,
+        background: '#0f1115'
+      }}
+      onClick={(e) => e.stopPropagation()} // prevent backdrop click from closing when clicking inside
+    >
+      {/* Header with close X */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <strong>Choose Action</strong>
+        <button onClick={closeActionMenu} aria-label="Close">✕</button>
+      </div>
+
+      {/* Root level */}
+      {ui.battleMenu === 'root' && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <button onClick={attack}>Attack</button>
+          <button onClick={openAbilitiesMenu}>Abilities</button>
+          <button onClick={defend}>Defend</button>
+          {/* For now, Use Item opens your current sheet/inventory panel */}
+          {players[0] && <button onClick={() => { closeActionMenu(); openSheet(players[0].id); }}>Use Item</button>}
+          <button onClick={closeActionMenu}>Back</button>
         </div>
+      )}
+
+      {/* Abilities submenu (placeholder until we wire knight skills) */}
+      {ui.battleMenu === 'abilities' && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ opacity: 0.85 }}>Abilities (coming online next):</div>
+          <button disabled>Power Slash</button>
+          <button disabled>Shield Bash</button>
+          <button disabled>Parry</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button onClick={() => setHeroes([...useGame.getState().heroes]) /* noop to please TS */} style={{ display: 'none' }} />
+            <button onClick={closeActionMenu}>Close</button>
+            <button onClick={openActionMenu}>Back</button>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
 
         <div className="log">
           {combat.log.map((l: LogEvent, i) => (
