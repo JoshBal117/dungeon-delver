@@ -125,14 +125,15 @@ export default function App() {
     }}>
       <div style={{ fontWeight: 700 }}>Dungeon Delver</div>
       <div className="buttons" style={{ gap: 8 }}>
-        <button onClick={goToTitle}>Title</button>
-        <button
-          title="Clear save and start a fresh run"
-          onClick={() => { localStorage.removeItem('dd:save'); newGame(); }}
-        >
-          Reset Save
-        </button>
-      </div>
+  <button onClick={goToTitle}>Title</button>
+  <button
+    title="Clear save and start a fresh run"
+    onClick={() => { localStorage.removeItem('dd:save'); newGame(); }}
+  >
+    Restart Run
+  </button>
+</div>
+
     </div>
   );
 
@@ -192,6 +193,11 @@ export default function App() {
   const actors: Actor[] = Object.values(combat.actors);
   const players = actors.filter(a => a.isPlayer);
   const foes = actors.filter(a => !a.isPlayer);
+
+  const isOver = combat.over;
+  const partyAlive = Object.values(combat.actors).some(a => a.isPlayer && a.hp.current > 0);
+  const isDefeat = isOver && !partyAlive;
+
 
  
   return (
@@ -258,6 +264,10 @@ export default function App() {
         </div>
       </div>
 
+
+
+
+
        {/* Controls row: left = Action/Inventory, right = Next Encounter */}
 <div className="buttons" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
   {/* Left group */}
@@ -270,9 +280,27 @@ export default function App() {
 
   {/* Right group */}
   <div style={{ display: 'flex', gap: 8 }}>
-    <button onClick={startNewCombat}>Next Encounter</button>
-    {combat.over && <span style={{ color: '#9cf', alignSelf: 'center' }}>Battle over</span>}
-  </div>
+  {isDefeat ? (
+    <button
+      onClick={() => {
+        // Full restart in arcade mode:
+        localStorage.removeItem('dd:save');
+        newGame();
+      }}
+    >
+      Restart Run
+    </button>
+  ) : (
+    <button onClick={startNewCombat} disabled={isOver && !partyAlive}>
+      Next Encounter
+    </button>
+  )}
+  {combat.over && (
+    <span style={{ color: isDefeat ? '#f66' : '#9cf', alignSelf: 'center' }}>
+      {isDefeat ? 'Defeated' : 'Battle over'}
+    </span>
+  )}
+</div>
 </div>
 
 {/* Submenu overlay/panel when open */}

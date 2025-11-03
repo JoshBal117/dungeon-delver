@@ -207,6 +207,20 @@ useAbility: async (id: AbilityId) => {
 
 // update existing actions to ensure submenu closes when appropriate
 startNewCombat: async () => {
+
+  const s = get();
+  const c = s.combat;
+
+   if (c?.over) {
+    const partyAlive = Object.values(c.actors).some(a => a.isPlayer && a.hp.current > 0);
+    if (!partyAlive) {
+      // Optionally append a log message to make it obvious in the UI:
+      const log = [...(c.log ?? []), { text: 'Defeat ends the run. Choose "Restart Run" to play again.' }];
+      set({ combat: { ...c, log } });
+      return;
+    }
+  }
+
   const s0 = rebuildCombat(get().heroes);
   set({ combat: s0, ui: { ...get().ui, battleMenu: 'closed' } });
   const s1 = await stepUntilPlayerAsync(s0, ENEMY_DELAY_MS);

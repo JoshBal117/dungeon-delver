@@ -32,7 +32,7 @@ export default function StartScreen() {
           boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
         }}
       >
-        <h1 style={{ marginTop: 0, marginBottom: 12, fontSize: 28 }}>Dungeon Delver — v0.4a.a</h1>
+        <h1 style={{ marginTop: 0, marginBottom: 12, fontSize: 28 }}>Dungeon Delver — v0.4a.b</h1>
 
         <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
           Welcome to my prototype game called Dungeon Delver. Here in this beginning game, you will help me test and provide feedback about the current features. This is a turn based combat system, it also incorperates a hit/miss chance mechanic as well as a Critical Hit chance as well. The enemies you face will automatically attack after your own attack, and if the enemy is faster than your character, they will go first.
