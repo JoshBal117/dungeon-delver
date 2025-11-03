@@ -8,11 +8,81 @@ import StartScreen from './StartScreen.tsx';
 
 
 
+function ItemsOverlay() {
+  // Alias useItem -> doUseItem to avoid react-hooks/rules-of-hooks false positive
+  const { ui, heroes, useItem: doUseItem, closeActionMenu } = useGame();
+  const hero = heroes[0];
+  if (ui.battleMenu !== 'items') return null;
+
+  const items = (hero?.inventory ?? []).filter(it =>
+    it.type === 'potion' || it.consumable || it.onUse || it.mods?.heal
+  );
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50
+      }}
+      onClick={closeActionMenu}
+    >
+      <div
+        className="panel"
+        style={{ minWidth: 320, padding: 16, border: '1px solid #23262b', borderRadius: 10, background: '#0f1115' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <strong>Use an Item</strong>
+          <button onClick={closeActionMenu} aria-label="Close">✕</button>
+        </div>
+
+        {(!items || items.length === 0) ? (
+          <div style={{ marginBottom: 12, opacity: 0.85 }}>No usable items.</div>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 260, overflowY: 'auto' }}>
+            {items.map(it => {
+              const heal = it.mods?.heal ??
+                (it.onUse && typeof it.onUse === 'string' && /(\d+)/.exec(it.onUse)?.[1] ? Number(/(\d+)/.exec(it.onUse)![1]) : undefined);
+              const subtitle = typeof heal === 'number' ? `Heals ${heal} HP` : (it.onUse ? String(it.onUse) : '');
+
+              return (
+                <li key={it.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{it.name}</div>
+                    {/* No it.description access — avoids TS error */}
+                    {subtitle ? <div style={{ fontSize: 12, opacity: 0.8 }}>{subtitle}</div> : null}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      // Call the aliased function, not something named `useItem`
+                      await doUseItem(hero.id, it.id);
+                    }}
+                  >
+                    Use
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <button onClick={closeActionMenu}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 
 export default function App() {
-  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, /*openItemsMenu,*/ openAbilitiesMenu, defend, useAbility:performAbility } = useGame();
+  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, openItemsMenu, openAbilitiesMenu, defend, useAbility:performAbility } = useGame();
   const savedRef = useRef(false);
 
   // --- tiny global header ---
@@ -201,18 +271,19 @@ export default function App() {
         <strong>Choose Action</strong>
         <button onClick={closeActionMenu} aria-label="Close">✕</button>
       </div>
-
+      <ItemsOverlay/>
       {/* Root level */}
       {ui.battleMenu === 'root' && (
         <div style={{ display: 'grid', gap: 8 }}>
           <button onClick={attack}>Attack</button>
           <button onClick={openAbilitiesMenu}>Abilities</button>
           <button onClick={defend}>Defend</button>
-          {/* For now, Use Item opens your current sheet/inventory panel */}
-          {players[0] && <button onClick={() => { closeActionMenu(); openSheet(players[0].id); }}>Use Item</button>}
+          <button onClick={openItemsMenu}>Use Item</button>
           <button onClick={closeActionMenu}>Back</button>
         </div>
       )}
+
+{players[0] && <button onClick={() => { closeActionMenu(); openSheet(players[0].id); }}>Use Item</button>}
 
       {/* Abilities submenu */}
       

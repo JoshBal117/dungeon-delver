@@ -109,17 +109,146 @@ Build a robust Knight foundation before introducing multi-class balance.
 
 Ensure persistence stability through consistent UUID and inventory cleanup.
 
-🧑‍💻 Developer Notes
+🧑‍💻 Developer Notes⚔️ Knight Abilities
 
-Goblins are now controlled by AI — they select targets, roll attacks, and act in initiative order.
+Power Slash · Shield Bash · Parry fully implemented; more abilties to come
 
-stepUntilPlayerAsync() governs AI pacing and simulates “thinking time.”
+Shared post-ability victory resolution (resolveOutcome)
 
-Future updates will tie delay speed to the enemy’s Speed stat for natural variety.
+SP cost, gating, and turn consumption rules completed
 
-Next milestone: Player and enemy ability systems, starting with Shield Bash, Slash, and Power Strike.
+Unified log feedback for buffs, stuns, and mitigations
 
-📜 Changelog
+💨 Stamina (SP) System
+
+Each ability consumes SP
+
+
+🛡 Armor & Damage Model
+
+Linear armor mitigation curve (~60 % soft cap)
+
+Crits (×1.5 pre-mitigation) and grazes (½ damage) now respect armor
+
+Strength-based scaling with ± variance for realism
+
+🎯 Hit / Miss / Crit Logic
+
+Fully integrated into combat math (rules.ts)
+
+Dex · Luck · Level deltas drive accuracy and crit odds
+
+Graze window = 8 points keeps tension without “whiff city”
+
+🤖 Enemy AI & Turn Flow
+
+Monsters act autonomously via decideAction()
+
+Initiative = Speed → Dex (tie-breaker)
+
+stepUntilPlayerAsync() handles delay pacing (3 s default)
+
+📜 Combat Log & UI
+
+Unified LogEvent pipeline with HP tracking
+
+In-battle Items overlay for potion use (no screen swap)
+
+Defend and Use Item correctly end player turn
+
+Persistent state with Zustand + localStorage
+
+🎒 Inventory & Equipment
+
+Unique IDs · dedupe system · stacking consumables
+
+Auto-swap gear between bag and slots
+
+Starter kits for each class archetype
+
+ 🌅 Next Milestone — v0.4a.c “Stamina and Fang”
+
+Focus:
+
+Implement Stamina Potions (SP restore logic + UI integration)
+
+Begin Monster Expansion (Wolf · Bat · Bandits and hrader goblin versions and more diverse enemies, with all of them having the relative stats + AI)
+
+Prep engine for World Map layer (hub town + first forest path)
+
+“The air thickens with new life — and new prey.”
+
+
+
+📜 Dungeon Delver Changelog
+v0.4.a.b — “Steel and Breath” (Current Version)
+
+Release Theme: Abilities and Stamina Online
+
+Core Additions
+
+Added full Knight ability suite: Power Slash, Shield Bash, and Parry.
+
+Implemented Stamina (SP) as a new combat resource; abilities now cost SP.
+
+Added SP display and handling in both Character Sheet and Battle UI.
+
+Implemented resolveOutcome(), ensuring instant victory/defeat checks after any ability kill.
+
+Extended combat log to include ability usage, buffs, and stuns.
+
+Updated Defend and Use Item to end the player’s turn cleanly before AI resumes.
+
+Added in-battle Items overlay to replace the old Inventory screen bounce.
+
+Rewrote useItem(actorId, itemId) for battle use with async AI continuation.
+
+Combat & Math
+
+Finalized Hit / Miss / Crit / Graze logic in rules.ts:
+
+Graze window = 8 points (half damage).
+
+Crit multiplier = ×1.5 applied pre-mitigation.
+
+Luck, Dex, and Level deltas affect both hit and crit rolls.
+
+Completed armor mitigation model via computeLinearMitigation(totalArmor) (~60 % soft cap).
+
+Crits and grazes now properly pass through mitigation, producing consistent results.
+
+Rebalanced base hit rate (BASE_HIT = 88) to eliminate “whiff city.”
+
+UI / UX
+
+Added modal-based Items overlay for in-battle potion use.
+
+Unified LogEvent structure across the app; every message now a full { text: string } object.
+
+Improved HP tracking and visual clarity in combat log entries (Knight HP 12/25).
+
+Patched React Hooks violations by restructuring all useGame() calls to top level.
+
+Updated UI routing: Start → Title → Battle → Sheet remains seamless.
+
+Persistence & Systems
+
+Zustand store now handles async methods safely with Promise returns.
+
+Out-of-battle item use mirrors updates into combat state when active.
+
+Starter kits (Knight baseline equipment + 3 potions) confirmed on load.
+
+Balance
+
+Polished early Knight STR scaling.
+
+Adjusted Power Slash multiplier to ×2 base → mitigated by armor.
+
+Shield Bash chance tuned with Dex-based scaling (10–90 %).
+
+Stun and Parry statuses properly tick down at end of round.
+
 v0.4a — “Mind of the Goblin” (Current)
 
 Added full AI-controlled enemy turns.

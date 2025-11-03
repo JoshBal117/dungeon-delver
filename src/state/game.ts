@@ -51,7 +51,7 @@ type GameStore = {
   closeSheet: () => void
 
   giveItem: (actorId: string, item: Item) => void;
-  useItem: (actorId: string, itemId: string) => void;
+  useItem: (actorId: string, itemId: string) => Promise<void>;
   equipItem: (actorId: string, itemId: string) => void;
  unequipItem: (actorId: string, slot:
   'weapon'|'shield'|'helm'|'cuirass'|'gauntlets'|'boots'|'greaves'|'robe'|'ring1'|'ring2'|'amulet'|'circlet'
@@ -180,6 +180,9 @@ defend: async () => {
   c.statuses![you.id] ??= [];
   c.statuses![you.id].push({ code: 'defend', turns: 1, potency: 0.30 });
   c.log.push({ text: `${you.name} takes a defensive stance (30% damage reduction).` });
+
+  //defend action consumes the player's turn
+  c.turn = c.turn + 1;
   set({ combat: c, ui: { ...s.ui, battleMenu: 'closed' } });
   const afterAI = await stepUntilPlayerAsync(c, ENEMY_DELAY_MS);
   set({ combat: afterAI });
@@ -307,7 +310,12 @@ set({combat: s1});
           set({ heroes: heroes.map(dedupeInventory) });
         },
 
-       useItem: (actorId, itemId) => {
+
+
+
+       useItem: async (actorId: string, itemId: string) => {
+
+
   const s = get();
 
   // find hero & item in the persisted slice
@@ -336,7 +344,12 @@ set({combat: s1});
       combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
     }
     hero.inventory.splice(ix, 1);
-    set({ heroes, combat }); 
+    //item usage comsumes the player's turn
+    combat.turn = combat.turn + 1;
+
+    set({ heroes, combat, ui: { ...s.ui, battleMenu: 'closed'} });
+    const afterAI = await stepUntilPlayerAsync(combat, ENEMY_DELAY_MS)
+    set({combat: afterAI }); 
     return;
   }
 
@@ -373,7 +386,7 @@ set({combat: s1});
   const slotKey = it.slot as keyof NonNullable<typeof a.equipment>;
   const prev = a.equipment[slotKey];
 
-  // ✅ Only push previous to bag if it’s a DIFFERENT item
+  
   if (prev && prev.id !== it.id) {
     a.inventory.push(prev);
   }

@@ -17,7 +17,7 @@ export const ARMOR: ItemTemplate[] = [
   { code: 'leather-gauntlets', name: 'Leather Vambraces', type: 'armor', slot: 'gauntlets', rarity: 'common', mods: { armor: 2 } },
   { code: 'leather-greaves', name: 'Leather Pants', type: 'armor', slot: 'greaves', rarity: 'common', mods: { armor: 2 } },
   { code: 'leather-boots', name: 'Leather Boots', type: 'armor', slot: 'boots', rarity: 'common', mods: { armor: 2 } },
-
+  { code: 'leather-hood', name: 'Leather Hood', type: 'armor', slot: 'helm', rarity: 'common', mods: { armor: 2}},
   { code: 'hide-cuirass', name: 'Hide Chest Armor', type: 'armor', slot: 'cuirass', rarity: 'common', mods: { armor: 2 } },
   { code: 'hide-gauntlets', name: 'Hide Bracers', type: 'armor', slot: 'gauntlets', rarity: 'common', mods: { armor: 1 } },
   { code: 'hide-greaves', name: 'Hide Pants', type: 'armor', slot: 'greaves', rarity: 'common', mods: { armor: 1 } },

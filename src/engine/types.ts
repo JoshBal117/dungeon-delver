@@ -51,6 +51,7 @@ export interface Item {
   onUse?: OnUseCode;
   value?: number;
   damageType?: DamageType;                 // for weapons
+  description?: string;
 }
 
 // Equipment object uses two ring slots (ring1, ring2)
