@@ -24,6 +24,13 @@ export function computeMpMax(c: Actor): number {
     return baseAtL1 + fromLevels + gear;
 }
 
+    export function computeSpMax(a: Actor): number {
+        const str = a.base.str ?? 0;
+        const con = a.base.con ?? 0;
+
+        return 10 + Math.floor(( str + con) / 2);
+    }
+
 export function visibleResource( c: Actor) {
     return {
         hp: c.hp,

@@ -1,6 +1,6 @@
 import type { Actor } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
-import { computeHpMax, computeMpMax } from '../engine/derived';
+import { computeHpMax, computeMpMax, computeSpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
 import { getTotalArmor } from '../engine/armor';
 
@@ -18,7 +18,7 @@ export function makeKnight(): Actor {
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: false },
     base: {
-      str: 4, dex: 3, int: 1, wis: 2, vit: 3,
+      str: 4, dex: 3, int: 1, wis: 2, vit: 3, con: 4,
       speed: 4, armor: 3, resist: 0, luck: 2,
     },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
@@ -29,8 +29,10 @@ export function makeKnight(): Actor {
 
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);
+  const spMax = computeSpMax(a);
   a.hp = {current: hpMax, max: hpMax};
   a.mp = {current: mpMax, max: mpMax};
+  a.sp = {current: spMax, max: spMax};
    a.inventory = [];
     a.equipment = {};
     a.gold = 50;
@@ -51,7 +53,7 @@ export function makeMage(): Actor {
     xp: 0,
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: true },
-    base: { str: 1, dex: 3, int: 5, wis: 2, vit: 2, speed: 3, armor: 0, resist: 1, luck: 2 },
+    base: { str: 1, dex: 3, int: 5, wis: 2, vit: 2,con:3, speed: 3, armor: 0, resist: 1, luck: 2 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
    
@@ -75,7 +77,7 @@ export function makeThief(): Actor {
     xp: 0,
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: false },
-    base: { str: 3, dex: 5, int: 1, wis: 1, vit: 2, speed: 5, armor: 1, resist: 0, luck: 3 },
+    base: { str: 3, dex: 5, int: 1, wis: 1, vit: 2,con: 4, speed: 5, armor: 1, resist: 0, luck: 3 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
   
@@ -97,7 +99,7 @@ export function makeCleric(): Actor {
     xp: 0,
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: true },
-    base: { str: 2, dex: 2, int: 2, wis: 5, vit: 3, speed: 3, armor: 2, resist: 2, luck: 2 },
+    base: { str: 2, dex: 2, int: 2, wis: 5, vit: 3, con: 3, speed: 3, armor: 2, resist: 2, luck: 2 },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },
     hp: { current: 0, max: 0 }, mp: { current: 0, max: 0 },
     
@@ -124,7 +126,7 @@ export function makeGoblin( id=1): Actor {
     xpToNext: xpToNextLevel(1),
     tags: { spellcaster: false, humanoid: true, },
     base: {
-      str: 2, dex: 4, int: 1, wis: 1, vit: 5,
+      str: 2, dex: 4, int: 1, wis: 1, vit: 5, con: 1,
       speed: 3, armor: 0, resist: 0, luck: 2,
     },
     gear: { hpMax: 0, mpMax: 0, speed: 0, armorPct: 0, resistPct: 0 },

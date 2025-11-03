@@ -1,6 +1,6 @@
 import { rng } from './rng';
 import { performAttack, applyDamage } from './rules';
-import type { Actor, CombatState } from './types';
+import type { Actor, CombatState, StatusCode, StatusEffect } from './types';
 import { makeItemFromCode } from './item-index';
 import { awardXPFromFoes } from './partyXp';
 import { decideAction } from './ai'
@@ -11,8 +11,8 @@ export function initCombat(party: Actor[], foes: Actor[]): CombatState {
   const all = [...party, ...foes];
   const order = [...all]
       .sort((a, b) => {
-        if (b.base.speed ! == a.base.speed) return b.base.speed - a.base.speed;
-        if (b.base.dex   ! == a.base.dex)   return b.base.dex   - a.base.dex;  
+        if (b.base.speed !== a.base.speed) return b.base.speed - a.base.speed;
+        if (b.base.dex   !== a.base.dex)   return b.base.dex   - a.base.dex;  
         return a.id.localeCompare(b.id)
       })
         .map(a => a.id);
@@ -31,11 +31,42 @@ export function initCombat(party: Actor[], foes: Actor[]): CombatState {
 
 
 
+function getEffects(s: CombatState, id: string): StatusEffect[] {
+  return (s.statuses?.[id] ?? []);
+}
+function hasEffect(s: CombatState, id: string, code: StatusCode): StatusEffect | undefined {
+  return getEffects(s, id).find(e => e.code === code);
+}
+function tickStatuses(s: CombatState, id: string) {
+  if (!s.statuses) return;
+  const next = (s.statuses[id] ?? []).map(e => ({ ...e, turns: e.turns - 1 })).filter(e => e.turns > 0);
+  s.statuses[id] = next;
+}
+function reduceDamageByStatuses(s: CombatState, targetId: string, dmg: number): number {
+  let out = dmg;
+  const parry = hasEffect(s, targetId, 'parry');
+  if (parry?.potency) out = Math.floor(out * (1 - parry.potency));
+  const defend = hasEffect(s, targetId, 'defend');
+  if (defend?.potency) out = Math.floor(out * (1 - defend.potency));
+  return Math.max(0, out);
+}
+
+
 export function step(state: CombatState): CombatState {
   if (state.over) return state;
 
+  
+
   const id = state.order[state.turn % state.order.length];
   const actor = state.actors[id];
+
+  const stunned = hasEffect(state, actor.id, 'stun');
+if (stunned) {
+  const newLog = [...state.log, { text: `${actor.name} is stunned and loses the turn.` }];
+  // tick and advance
+  tickStatuses(state, actor.id);
+  return { ...state, log: newLog, turn: state.turn + 1 };
+}
 
  
 // --- Decide action via AI ---
@@ -75,8 +106,8 @@ const result = performAttack(actor, target);
       turn: state.turn + 1,
     };
   }
-
-  applyDamage(target, result.dmg);
+  const mitigated = reduceDamageByStatuses(state, target.id, result.dmg);
+  applyDamage(target,mitigated);
 
 // Pick a verb from damage type
 
@@ -143,7 +174,7 @@ export async function stepUntilPlayerAsync(state: CombatState, delayMs = 1000): 
 
     // Delay before the AI acts
     await wait(delayMs);
-
+    
     s = step(s);
   }
   return s;

@@ -10,8 +10,9 @@ import StartScreen from './StartScreen.tsx';
 
 
 
+
 export default function App() {
-  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, /*openItemsMenu,*/ openAbilitiesMenu, defend } = useGame();
+  const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, /*openItemsMenu,*/ openAbilitiesMenu, defend, useAbility:performAbility } = useGame();
   const savedRef = useRef(false);
 
   // --- tiny global header ---
@@ -154,7 +155,7 @@ export default function App() {
         </div>
       </div>
 
-       {/* Controls row: left = Action/Inventory, right = New Battle */}
+       {/* Controls row: left = Action/Inventory, right = Next Encounter */}
 <div className="buttons" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
   {/* Left group */}
   <div style={{ display: 'flex', gap: 8 }}>
@@ -213,13 +214,15 @@ export default function App() {
         </div>
       )}
 
-      {/* Abilities submenu (placeholder until we wire knight skills) */}
+      {/* Abilities submenu */}
+      
+ 
       {ui.battleMenu === 'abilities' && (
         <div style={{ display: 'grid', gap: 8 }}>
-          <div style={{ opacity: 0.85 }}>Abilities (coming online next):</div>
-          <button disabled>Power Slash</button>
-          <button disabled>Shield Bash</button>
-          <button disabled>Parry</button>
+          <div style={{ opacity: 0.85 }}>Abilities:</div>
+          <button onClick={() => performAbility('power_slash_lv1')}>Power Slash (2 SP)</button>
+          <button onClick={() => performAbility('shield_bash_lv1')}>Shield Bash (2 SP)</button>
+          <button onClick={() => performAbility('parry_lv1')}>Parry (15%)</button>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button onClick={() => setHeroes([...useGame.getState().heroes]) /* noop to please TS */} style={{ display: 'none' }} />
             <button onClick={closeActionMenu}>Close</button>
@@ -251,6 +254,7 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
           <strong>{a.name}</strong>{' '}
           <span>Lv {a.level}</span>{' '}
           <span>HP {a.hp.current}/{a.hp.max}</span>{' '}
+          {a.isPlayer && !a.tags?.spellcaster && a.sp ? (<span> | SP {a.sp.current}/{a.sp.max}</span>) : null}
           {a.tags?.spellcaster ? <span> | MP {a.mp.current}/{a.mp.max}</span> : null}
           {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
         </div>

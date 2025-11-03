@@ -5,10 +5,11 @@ import type { CombatState, Actor, Item } from '../engine/types';
 import { initCombat, step, stepUntilPlayerAsync } from '../engine/combat';
 import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './factories';
 import type { ClassId } from './factories';
-import { computeHpMax, computeMpMax } from '../engine/derived';
+import { computeHpMax, computeMpMax, computeSpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
 import { newItemId } from '../engine/item-index';
-
+import { applyAbility, } from '../engine/abilities';
+import type { AbilityId } from '../engine/abilities';
 
 const ENEMY_DELAY_MS = 1000
 
@@ -29,6 +30,7 @@ type GameStore = {
   startNewCombat: () => Promise<void>;
   attack: () => Promise<void>;
 
+  useAbility: (id: AbilityId) => Promise<void>;
   //new actions
   defend: () => Promise<void>;
   openActionMenu: () => void;
@@ -57,10 +59,12 @@ type GameStore = {
 
 };
 
+
 // Normalize resource pools based on derived max
 const ensurePools = (a: Actor): Actor => {
   const hpMax = computeHpMax(a);
   const mpMax = computeMpMax(a);
+  const spMax = computeSpMax(a);
   return {
     ...a,
     hp: {
@@ -71,6 +75,10 @@ const ensurePools = (a: Actor): Actor => {
       max: mpMax,
       current: a.mp?.current && a.mp.current > 0 ? Math.min(a.mp.current, mpMax) : mpMax,
     },
+    sp: {
+      max: spMax,
+      current: a.sp?.current && a.sp.current > 0 ? Math.min(a.sp.current, spMax) : spMax,
+    }
   };
 };
 
@@ -146,6 +154,7 @@ const spawnGoblins = () => [makeGoblin(1)];
 const rebuildCombat = (heroes: Actor[]): CombatState =>
   initCombat(heroes.map(ensurePools), spawnGoblins());
 
+
 export const useGame = create<GameStore>()(
   persist(
     (set, get) => {
@@ -166,11 +175,32 @@ openAbilitiesMenu: () => set({ ui: { ...get().ui, battleMenu: 'abilities' } }),
 // Simple "Defend": log and pass turn to AI
 defend: async () => {
   const s = get();
-  const combat = { ...s.combat, log: [...s.combat.log, { text: 'Knight braces for impact (Defend).' }] };
-  set({ combat, ui: { ...s.ui, battleMenu: 'closed' } });
-  const afterAI = await stepUntilPlayerAsync(combat, ENEMY_DELAY_MS);
+  const you = get().heroes[0];
+  const c = { ...s.combat, statuses: s.combat.statuses ?? {}, log: [...s.combat.log] };
+  c.statuses![you.id] ??= [];
+  c.statuses![you.id].push({ code: 'defend', turns: 1, potency: 0.30 });
+  c.log.push({ text: `${you.name} takes a defensive stance (30% damage reduction).` });
+  set({ combat: c, ui: { ...s.ui, battleMenu: 'closed' } });
+  const afterAI = await stepUntilPlayerAsync(c, ENEMY_DELAY_MS);
   set({ combat: afterAI });
 },
+
+useAbility: async (id: AbilityId) => {
+  const s0 = get().combat;
+  const hero = get().heroes[0];            // current player character
+  if (!s0 || !hero) return;
+
+  // Ensure statuses bag exists before applying
+  const s1 = applyAbility({ ...s0, statuses: s0.statuses ?? {} }, hero.id, id);
+
+  // Close menu, commit player action
+  set({ combat: s1, ui: { ...get().ui, battleMenu: 'closed' } });
+
+  // Let AI resolve until it's the player's turn again
+  const s2 = await stepUntilPlayerAsync(s1, ENEMY_DELAY_MS);
+  set({ combat: s2 });
+},
+
 
 // update existing actions to ensure submenu closes when appropriate
 startNewCombat: async () => {
@@ -306,7 +336,7 @@ set({combat: s1});
       combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
     }
     hero.inventory.splice(ix, 1);
-    set({ heroes, combat }); // ✅ update both slices
+    set({ heroes, combat }); 
     return;
   }
 
@@ -319,9 +349,9 @@ set({combat: s1});
     const act = combat.actors[actorId];
     act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
     combat.log = [...combat.log, { text: `${act.name} uses a potion and heals ${amt} HP.` }];
-    set({ heroes, combat }); // ✅ mirror heal into combat
+    set({ heroes, combat });
   } else {
-    set({ heroes }); // ✅ only heroes slice changes
+    set({ heroes });
   }
 },
 
@@ -373,8 +403,6 @@ set({combat: s1});
       version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ heroes: s.heroes }),
-
-      // ✅ rehydrate path can't be truly async; do two-phase update:
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const fixed = state.heroes.map(ensurePools).map(ensureBags).map(dedupeInventory);

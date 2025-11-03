@@ -31,6 +31,14 @@ export type OnUseCode =
   | 'mana_10' | 'mana_25' | 'mana_50' | 'mana_100'
   | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
 
+export type StatusCode = 'stun' | 'parry' | 'defend';
+
+export type StatusEffect = {
+  code: StatusCode;
+  turns: number;
+  potency?: number;
+};
+
 export interface Item {
   id: string;
   code: string;
@@ -60,6 +68,7 @@ export type BaseAttributes = {
   int: number;
   wis: number;
   vit: number;
+  con: number;
   speed: number;
   armor: number;
   resist: number;
@@ -106,12 +115,13 @@ export type Actor = {
   gear: GearBonuses;        // equipment modifiers
   hp: Resource;             // visible HP
   mp: Resource;             // visible MP (if spellcaster)
-
+  sp?: Resource; 
   // NEW: inventory/equipment/currency
   inventory?: Item[];
   equipment?: Equipment;
   gold?: number;
 
+  effects?: StatusEffect[];
 
 };
 
@@ -126,4 +136,5 @@ export type CombatState = {
   actors: Record<string, Actor>;
   log: LogEvent[];
   over: boolean;
+  statuses?: Record<string, StatusEffect[]>;
 };

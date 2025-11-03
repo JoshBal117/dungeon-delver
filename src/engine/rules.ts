@@ -69,10 +69,11 @@ function weaponCrit(attacker: Actor): number {
 }
 
 // Tunables
-const BASE_HIT   = 75;  // %
-const DEX_DIFF   = 3;   // per point of (attDEX - defDEX)
-const LUCK_HIT   = 1;   // per point of (attLCK - defLCK)
-const MIN_HIT    = 5;
+const BASE_HIT   = 88;  // %
+const DEX_DIFF   = 2;   // per point of (attDEX - defDEX)
+const LUCK_HIT   = 0.5;
+const LEVEL_HIT  = 1.5; // per point of (attLCK - defLCK)
+const MIN_HIT    = 60;
 const MAX_HIT    = 98;
 
 const BASE_CRIT  = 5;   // %
@@ -80,15 +81,19 @@ const LUCK_CRIT  = 1;   // per LCK
 const MAX_CRIT   = 50;
 const CRIT_MULT  = 1.5;
 
+const GRAZE_WINDOW = 8;
+const GRAZE_MULT   = 0.5; 
+
 function rollPct(pct: number): boolean {
   const r = rng.int(1, 100); // inclusive
   return r <= pct;
 }
 
 export function computeHitChance(attacker: Actor, defender: Actor): number {
-  const dexDelta  = (attacker.base.dex ?? 0) - (defender.base.dex ?? 0);
-  const luckDelta = (attacker.base.luck ?? 0) - (defender.base.luck ?? 0);
-  const chance    = BASE_HIT + dexDelta * DEX_DIFF + luckDelta * LUCK_HIT + weaponAccuracy(attacker);
+  const dexDelta   = (attacker.base.dex ?? 0) - (defender.base.dex ?? 0);
+  const luckDelta  = (attacker.base.luck ?? 0) - (defender.base.luck ?? 0);
+  const levelDelta = (attacker.level ?? 1) - (defender.level ?? 1);
+  const chance     = BASE_HIT + dexDelta * DEX_DIFF + luckDelta * LUCK_HIT + levelDelta * LEVEL_HIT + weaponAccuracy(attacker);
   return clampN(Math.floor(chance), MIN_HIT, MAX_HIT);
 }
 
@@ -122,43 +127,45 @@ function critPhraseForWeapon(name: string): string {
 export function performAttack(attacker: Actor, defender: Actor): AttackResult {
   // 1) to-hit gate
   const toHit = computeHitChance(attacker, defender);
-  if (!rollPct(toHit)) {
+  const roll = rng.int(1, 100);
+  if (roll > toHit + GRAZE_WINDOW) {
     const weaponName = getWeaponName(attacker);
     const logLine = `${attacker.name} misses ${defender.name}${weaponName === 'Fists' ? '' : ` with ${weaponName}`}.`;
     return { hit: false, crit: false, dmg: 0, verb: 'misses', weaponName, logLine };
   }
 
-  // 2) baseline damage (non-crit)
-  const raw          = computeRawPhysicalDamage(attacker);
-  const nonCritBase  = applyMitigationToRaw(raw, defender);
-  const nonCritFinal = Math.max(1, nonCritBase + rng.int(-2, 2)); // −2..+2 variance
+  // Compute baseline damage
+  const raw         = computeRawPhysicalDamage(attacker);
+  const baseAfter   = applyMitigationToRaw(raw, defender);
+  const nonCrit     = Math.max(1, baseAfter + rng.int(-2, 2)); // −2..+2 variance
+  const weaponName  = getWeaponName(attacker);
 
-  // 3) crit roll and crit branch (multiply BEFORE mitigation)
-  const isCrit = rollPct(computeCritChance(attacker));
-  let dmg      = nonCritFinal;
+  // Graze (no crits on grazes, reduced damage)
+  if (roll > toHit) {
+    const dmg = Math.max(1, Math.floor(nonCrit * GRAZE_MULT));
+    const logLine = `${attacker.name} grazes ${defender.name} with ${weaponName} for ${dmg} damage.`;
+    return { hit: true, crit: false, dmg, verb: 'grazes', weaponName, logLine };
+  }
+
+  // Full hit (crit possible)
+  const isCrit   = rollPct(computeCritChance(attacker));
+  let dmg        = nonCrit;
 
   if (isCrit) {
     const critRaw   = raw * CRIT_MULT;
     const critBase  = applyMitigationToRaw(critRaw, defender);
-    const critFinal = Math.max(2, critBase + rng.int(0, 2)); // non-negative variance for crits
-    dmg = Math.max(critFinal, nonCritFinal + 1);             // ensure crit > non-crit
+    const critFinal = Math.max(2, critBase + rng.int(0, 2));
+    dmg = Math.max(critFinal, nonCrit + 1);
   }
 
-  // 4) narration, after we know crit + dmg
-  const weaponName = getWeaponName(attacker);
-  const verb       = verbFromWeaponName(weaponName);
-
-  // Optional: debug
-  // console.log('[HIT]', { atk: attacker.name, def: defender.name, isCrit, nonCritFinal, final: dmg });
-
-  let logLine: string;
-  if (isCrit) {
-    const phrase = critPhraseForWeapon(weaponName);
-    const lead   = attacker.isPlayer ? 'unleashes' : 'lands';
-    logLine = `Critical Hit! ${attacker.name} ${lead} a ${phrase} on ${defender.name} with ${weaponName}, dealing ${dmg} damage!`;
-  } else {
-    logLine = `${attacker.name} ${verb} ${defender.name} with ${weaponName} for ${dmg} damage.`;
-  }
+  const verb = verbFromWeaponName(weaponName);
+  const logLine = isCrit
+    ? (() => {
+        const phrase = critPhraseForWeapon(weaponName);
+        const lead   = attacker.isPlayer ? 'unleashes' : 'lands';
+        return `Critical Hit! ${attacker.name} ${lead} a ${phrase} on ${defender.name} with ${weaponName}, dealing ${dmg} damage!`;
+      })()
+    : `${attacker.name} ${verb} ${defender.name} with ${weaponName} for ${dmg} damage.`;
 
   return { hit: true, crit: isCrit, dmg, verb, weaponName, logLine };
 }
