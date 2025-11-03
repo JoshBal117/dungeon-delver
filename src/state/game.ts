@@ -237,14 +237,22 @@ attack: async () => {
         setHeroes: (h) => set({ heroes: h.map(ensurePools).map(ensureBags).map(dedupeInventory) }),
 
         // NEW: delegate to startNewRun so seeding happens in one place
-        newGame: () => {void get().startNewRun('knight'); },
+        newGame: () => {
+  // fully clear the persisted slice
+  try { localStorage.removeItem('dd:save'); } catch {
+    //ignore for now, as we are trying to seed a new run from restart run 
+  }
+  // move to title so UI is clean, then immediately seed a new Knight run
+  set({ ui: { screen: 'title', battleMenu: 'closed' } });
+  void get().startNewRun('knight');
+},
 
         goToTitle:      () => set({ ui: { screen: 'start' } }),
         goToStart:      () => set({ ui: { screen: 'start' } }),
         goToClassSelect: () => set({ ui: { screen: 'title' } }),
 
        startNewRun: async (classId: ClassId) => {
-  if (get().ui.screen !== 'title') return;   // guard against double clicks
+  
 
  
 
