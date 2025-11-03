@@ -15,6 +15,59 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;               /* kill sideways scroll */
+  background: #0b0d11;
+  color: #ddd;
+}
+
+.container {
+  padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.panel {
+  overflow: hidden;                 /* keep inner content from overflowing */
+  word-wrap: break-word;
+}
+
+/* Buttons wrap on narrow screens */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Battlefield: stack on narrow screens */
+@media (max-width: 480px) {
+  .battlefield {
+    grid-template-columns: 1fr !important;  /* was 1fr 1fr */
+    min-height: auto !important;
+    gap: 12px !important;
+  }
+}
+
+/* Use dynamic viewport to avoid iOS 100vh bug in full-height sections */
+.full-viewport {
+  min-height: 100dvh;  /* iOS 16+ */
+  min-height: 100svh;  /* spec viewport */
+}
+
+/* Utility: responsive widths */
+.w-responsive {
+  width: min(92vw, 420px);
+}
+
+
+
+
 /* reset-ish */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }

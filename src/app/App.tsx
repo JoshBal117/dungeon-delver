@@ -79,7 +79,37 @@ function ItemsOverlay() {
   );
 }
 
-
+function ResourceBar({
+  label,
+  current,
+  max,
+  color,
+  width = 160,
+}: {label: string; current: number; max: number; color: string; width?: number }) {
+  const denom = Math.max(1, max ?? 0);
+  const pct = Math.max(0, Math.min(100, Math.floor((current / denom ) *100)));
+  return (
+    <div style={{ width, marginTop: 4 }}>
+      <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 2 }}>
+        {label} {current}/{max}
+      </div>
+      <div style={{
+        height: 8,
+        background: '#222',
+        border: '1px solid #333',
+        borderRadius: 4,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${pct}%`,
+          height: '100%',
+          background: color,
+          transition: 'width 250ms linear'
+        }} />
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const { ui, combat, attack, startNewCombat, setHeroes, newGame, goToTitle, openSheet, openActionMenu, closeActionMenu, openItemsMenu, openAbilitiesMenu, defend, useAbility:performAbility } = useGame();
@@ -177,20 +207,21 @@ export default function App() {
 
          {/* 🆕 Battlefield sprites go here */}
       <div
-        className="battlefield"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 24,
-          alignItems: 'end',
-          minHeight: 220,
-          padding: 16,
-          marginBottom: 16,
-          background: 'linear-gradient(#1a1d22, #0f1115)',
-          border: '1px solid #23262b',
-          borderRadius: 8,
-        }}
-      >
+  className="battlefield"
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 24,
+    alignItems: 'end',
+    minHeight: 220,
+    padding: 16,
+    marginBottom: 16,
+    background: 'linear-gradient(#1a1d22, #0f1115)',
+    border: '1px solid #23262b',
+    borderRadius: 8,
+  }}
+>
+
 
         {/* Player side (left) */}
         <div style={{ display: 'flex', alignItems: 'end', height: 200 }}>
@@ -201,7 +232,7 @@ export default function App() {
               alt={players[0].name}
               width={128}
               height={128}
-              style={{ imageRendering: 'pixelated' }}
+              style={{ imageRendering: 'pixelated', width: 'clamp(72px, 28 vw, 128 px)', height: 'auto'}}
             />
           )}
         </div>
@@ -218,6 +249,8 @@ export default function App() {
               height={96}
               style={{
                 imageRendering: 'pixelated',
+                width: 'clamp(56px, 22vw, 96px',
+                height: 'auto',
                 filter: f.hp.current <= 0 ? 'grayscale(100%) opacity(55%)' : 'none',
               }}
             />
@@ -256,16 +289,11 @@ export default function App() {
     onClick={closeActionMenu}
   >
     <div
-      className="panel"
-      style={{
-        minWidth: 320,
-        padding: 16,
-        border: '1px solid #23262b',
-        borderRadius: 10,
-        background: '#0f1115'
-      }}
-      onClick={(e) => e.stopPropagation()} // prevent backdrop click from closing when clicking inside
-    >
+  className="panel w-responsive"
+  style={{ padding: 16, border: '1px solid #23262b', borderRadius: 10, background: '#0f1115', maxWidth: 520, maxHeight: '80dvh', overflow: 'auto' }}
+  onClick={e => e.stopPropagation()}
+>
+
       {/* Header with close X */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <strong>Choose Action</strong>
@@ -320,25 +348,34 @@ function Party({ title, list }: { title: string; list: Actor[] }) {
   return (
     <div className="panel">
       <h2>{title}</h2>
-      {list.map(a => (
-        <div key={a.id} style={{ marginBottom: 10 }}>
-          <strong>{a.name}</strong>{' '}
-          <span>Lv {a.level}</span>{' '}
-          <span>HP {a.hp.current}/{a.hp.max}</span>{' '}
-          {a.isPlayer && !a.tags?.spellcaster && a.sp ? (<span> | SP {a.sp.current}/{a.sp.max}</span>) : null}
-          {a.tags?.spellcaster ? <span> | MP {a.mp.current}/{a.mp.max}</span> : null}
-          {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
-        </div>
-      ))}
+      {list.map(a => {
+        const showSP = !!a.sp && a.sp.max > 0;
+        const showMP = !!a.mp && a.mp.max > 0 && (a.tags?.spellcaster ?? false);
+        return (
+          <div key={a.id} style={{ marginBottom: 12 }}>
+            <strong>{a.name}</strong>{' '}
+            <span>Lv {a.level}</span>
+            {/* Inline snapshot numbers stay (quick scan), bars below */}
+            
+
+            {/* Bars */}
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <ResourceBar label="HP" current={a.hp.current} max={a.hp.max} color="#c0392b" />
+              {showSP && <ResourceBar label="SP" current={a.sp!.current} max={a.sp!.max} color="#2ecc71" />}
+              {showMP && <ResourceBar label="MP" current={a.mp!.current} max={a.mp!.max} color="#2980b9" />}
+              {a.isPlayer ? <XPBar xp={a.xp} xpToNext={a.xpToNext} /> : null}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
+
 function XPBar({ xp, xpToNext }: { xp: number; xpToNext: number }) {
-  // guard against divide-by-zero and clamp to [0,100]
   const denom = Math.max(1, xpToNext);
   const pct = Math.max(0, Math.min(100, Math.floor((xp / denom) * 100)));
-
   return (
     <div style={{ width: 160, marginTop: 4 }}>
       <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 2 }}>
@@ -351,14 +388,16 @@ function XPBar({ xp, xpToNext }: { xp: number; xpToNext: number }) {
         borderRadius: 4,
         overflow: 'hidden'
       }}>
+        {/* Gold fill */}
         <div style={{
           width: `${pct}%`,
           height: '100%',
-          background: '#24c24a',          // ✅ green fill
+          background: '#d4af37',
           transition: 'width 250ms linear'
         }} />
       </div>
     </div>
   );
 }
+
 

@@ -2,6 +2,38 @@ import { useGame } from '../state/game.ts';
 import type { Item } from '../engine/types';
 import { getTotalArmor,  } from '../engine/armor.ts';
 
+function ResourceBar({
+  label,
+  current,
+  max,
+  color,
+  width = 240,
+}: { label: string; current: number; max: number; color: string; width?: number }) {
+  const denom = Math.max(1, max ?? 0);
+  const pct = Math.max(0, Math.min(100, Math.floor((current / denom) * 100)));
+  return (
+    <div style={{ width, marginTop: 6 }}>
+      <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 2 }}>
+        {label} {current}/{max}
+      </div>
+      <div style={{
+        height: 10,
+        background: '#222',
+        border: '1px solid #333',
+        borderRadius: 4,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${pct}%`,
+          height: '100%',
+          background: color,
+          transition: 'width 250ms linear'
+        }} />
+      </div>
+    </div>
+  );
+}
+
 export default function CharacterSheet() {
   const { ui, heroes, closeSheet } = useGame();
   const id = ui.selectID ?? heroes[0]?.id;
@@ -23,10 +55,19 @@ export default function CharacterSheet() {
     <div className="container">
       <div className="panel" style={{ maxWidth: 560, margin: '0 auto' }}>
         <h2 style={{ marginTop: 0 }}>{a.name} — Level {a.level}</h2>
-        <div className="statline" style={{ marginBottom: 8 }}>
-          HP {a.hp.current}/{a.hp.max}
-          {a.tags?.spellcaster ? <> | MP {a.mp.current}/{a.mp.max}</> : null}
-        </div>
+        
+
+{/* Resource bars */}
+<div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
+  <ResourceBar label="HP" current={a.hp.current} max={a.hp.max} color="#c0392b" />
+  {a.sp && a.sp.max > 0 && (
+    <ResourceBar label="SP" current={a.sp.current} max={a.sp.max} color="#2ecc71" />
+  )}
+  {a.tags?.spellcaster && a.mp && a.mp.max > 0 && (
+    <ResourceBar label="MP" current={a.mp.current} max={a.mp.max} color="#2980b9" />
+  )}
+</div>
+
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <Stat label="STR" v={a.base.str} />
