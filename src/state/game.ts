@@ -278,7 +278,7 @@ attack: async () => {
     'iron-shield',
     ].forEach(add);
 // Starter potions
-  ['heal-lesser', 'heal-lesser', ].forEach(add);
+  ['heal-lesser', 'heal-lesser', 'stamina-lesser', 'stamina-lesser'].forEach(add);
 
   // Auto-equip from bag by code
   const equipByCode = (slot: keyof NonNullable<typeof h.equipment>, code: string) => {
