@@ -278,7 +278,7 @@ attack: async () => {
     'iron-shield',
     ].forEach(add);
 // Starter potions
-  ['heal-lesser', 'heal-lesser', 'heal-lesser'].forEach(add);
+  ['heal-lesser', 'heal-lesser', ].forEach(add);
 
   // Auto-equip from bag by code
   const equipByCode = (slot: keyof NonNullable<typeof h.equipment>, code: string) => {
@@ -350,44 +350,82 @@ set({combat: s1});
   const it = hero.inventory[ix];
 
   const code = (it.onUse ?? 'none').toLowerCase();
-  const healMap: Record<string, number> = {
-    'heal_10': 10, 'heal_25': 25, 'heal_50': 50, 'heal_100': 100,
-    'heal-lesser': 10, 'heal': 25, 'heal-greater': 50, 'heal-superior': 100,
-  };
-  const amt = healMap[code] ?? it.mods?.heal ?? 0;
-  if (amt <= 0) { set({ heroes }); return; }
 
-  if (s.ui.screen === 'battle' && s.combat) {
-    // in-battle: heal combat actor + consume item
-    const combat = { ...s.combat, actors: { ...s.combat.actors } };
-    const actor = combat.actors[actorId] ?? Object.values(combat.actors).find(a => a.isPlayer);
-    if (actor) {
-      actor.hp = { ...actor.hp, current: Math.min(actor.hp.max, actor.hp.current + amt) };
-      combat.log = [...combat.log, { text: `${actor.name} drinks a potion and heals ${amt} HP.` }];
-    }
-    hero.inventory.splice(ix, 1);
-    //item usage comsumes the player's turn
-    combat.turn = combat.turn + 1;
+// HP map (kept)
+const healMap: Record<string, number> = {
+  'heal_10': 10, 'heal_25': 25, 'heal_50': 50, 'heal_100': 100,
+  'heal-lesser': 10, 'heal': 25, 'heal-greater': 50, 'heal-superior': 100,
+};
 
-    set({ heroes, combat, ui: { ...s.ui, battleMenu: 'closed'} });
-    const afterAI = await stepUntilPlayerAsync(combat, ENEMY_DELAY_MS)
-    set({combat: afterAI }); 
-    return;
+// MP map (new)
+const manaMap: Record<string, number> = {
+  'mana_10': 10, 'mana_25': 25, 'mana_50': 50, 'mana_100': 100,
+  'mana-lesser': 10, 'mana-potion': 25, 'mana-greater': 50, 'mana-superior': 100,
+};
+
+// SP map (new)
+const staminaMap: Record<string, number> = {
+  'stamina_10': 10, 'stamina_25': 25, 'stamina_50': 50, 'stamina_100': 100,
+  'stamina-lesser': 10, 'stamina-potion': 25, 'stamina-greater': 50, 'stamina-superior': 100,
+};
+
+const hpAmt = healMap[code] ?? it.mods?.heal ?? 0;
+const mpAmt = manaMap[code] ?? 0;
+const spAmt = staminaMap[code] ?? 0;
+
+// if no effect detected, bail like before
+if (hpAmt <= 0 && mpAmt <= 0 && spAmt <= 0) { set({ heroes }); return; }
+
+
+ if (s.ui.screen === 'battle' && s.combat) {
+  const combat = { ...s.combat, actors: { ...s.combat.actors } };
+  const actor = combat.actors[actorId] ?? Object.values(combat.actors).find(a => a.isPlayer);
+  if (actor) {
+    if (hpAmt > 0) actor.hp = { ...actor.hp, current: Math.min(actor.hp.max, actor.hp.current + hpAmt) };
+    if (mpAmt > 0 && actor.mp) actor.mp = { ...actor.mp, current: Math.min(actor.mp.max, actor.mp.current + mpAmt) };
+    if (spAmt > 0 && actor.sp) actor.sp = { ...actor.sp, current: Math.min(actor.sp.max, actor.sp.current + spAmt) };
+
+    const parts: string[] = [];
+    if (hpAmt > 0) parts.push(`heals ${hpAmt} HP`);
+    if (mpAmt > 0) parts.push(`restores ${mpAmt} MP`);
+    if (spAmt > 0) parts.push(`restores ${spAmt} SP`);
+    combat.log = [...combat.log, { text: `${actor.name} drinks a potion and ${parts.join(' & ')}.` }];
   }
-
-  // out-of-battle: heal persisted hero, mirror into combat if present
-  hero.hp.current = Math.min(hero.hp.max, hero.hp.current + amt);
   hero.inventory.splice(ix, 1);
 
-  if (s.combat && s.combat.actors[actorId]) {
-    const combat = { ...s.combat, actors: { ...s.combat.actors } };
-    const act = combat.actors[actorId];
-    act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
-    combat.log = [...combat.log, { text: `${act.name} uses a potion and heals ${amt} HP.` }];
-    set({ heroes, combat });
-  } else {
-    set({ heroes });
-  }
+  // item use consumes player's turn
+  combat.turn = combat.turn + 1;
+
+  set({ heroes, combat, ui: { ...s.ui, battleMenu: 'closed'} });
+  const afterAI = await stepUntilPlayerAsync(combat, ENEMY_DELAY_MS);
+  set({ combat: afterAI });
+  return;
+}
+
+
+  // out-of-battle: update persisted hero pools
+if (hpAmt > 0) hero.hp.current = Math.min(hero.hp.max, hero.hp.current + hpAmt);
+if (mpAmt > 0 && hero.mp) hero.mp.current = Math.min(hero.mp.max, hero.mp.current + mpAmt);
+if (spAmt > 0 && hero.sp) hero.sp.current = Math.min(hero.sp.max, hero.sp.current + spAmt);
+
+hero.inventory.splice(ix, 1);
+
+// mirror into combat if present
+if (s.combat && s.combat.actors[actorId]) {
+  const combat = { ...s.combat, actors: { ...s.combat.actors } };
+  const act = combat.actors[actorId];
+  if (hpAmt > 0) act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
+  if (mpAmt > 0 && act.mp) act.mp = { ...act.mp, current: Math.min(act.mp.max, hero.mp.current) };
+  if (spAmt > 0) {
+  hero.sp = hero.sp ?? { current: 0, max: 0 }; // ensure structure
+  hero.sp.current = Math.min(hero.sp.max, hero.sp.current + spAmt);
+}
+  combat.log = [...combat.log, { text: `${act.name} uses a potion.` }];
+  set({ heroes, combat });
+} else {
+  set({ heroes });
+}
+
 },
 
 

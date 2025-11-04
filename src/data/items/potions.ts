@@ -11,6 +11,11 @@ export const POTIONS: ItemTemplate[] = [
   { code: 'heal-greater',  name: 'Greater Healing Potion',type: 'potion', rarity: 'rare',     onUse: 'heal_50' },
   { code: 'heal-superior', name: 'Superior Healing Potion',type:'potion', rarity: 'epic',     onUse: 'heal_100' },
 
+  { code: 'stamina-lesser', name: 'Lesser Stamina Potion',     type: 'potion', rarity: 'common' ,   onUse: 'stamina_10'},
+  { code: 'stamina-potion', name: 'Stamina Potion',            type: 'potion', rarity: 'uncommon' , onUse: 'stamina_25'},
+  { code: 'stamina-greater', name: 'Greater Stamina Potion',   type: 'potion', rarity: 'rare' ,     onUse: 'stamina_50'},
+  { code: 'stamina-superior', name: 'Superior Stamina Potion', type: 'potion', rarity: 'epic' ,     onUse: 'stamina_100'},
+
   { code: 'speed-potion',   name: 'Potion of Speed',      type: 'potion', rarity: 'uncommon', onUse: 'speed_buff' },
   { code: 'fire-res-potion',name:'Potion of Fire Resist', type: 'potion', rarity: 'uncommon', onUse: 'fire_res' },
   { code: 'ice-res-potion', name:'Potion of Ice Resist',  type: 'potion', rarity: 'uncommon', onUse: 'ice_res' },

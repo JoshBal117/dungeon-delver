@@ -6,6 +6,53 @@ import { awardXPFromFoes } from './partyXp';
 import { decideAction } from './ai'
 
 
+// --- Loot helpers (typed, no any, uses rng) ----------------------
+type SlimeColor = 'red' | 'green' | 'blue';
+
+const isHumanoid = (a: Actor) => Boolean(a.tags?.humanoid);
+
+// Read tags.slimeColor in a typed-safe way without `any`
+const slimeColorOf = (a: Actor): SlimeColor | undefined => {
+  const t = a.tags as { slimeColor?: SlimeColor } | undefined;
+  return t?.slimeColor;
+};
+
+function rngChance(pct: number): boolean {
+  // pct as 0..100
+  return rng.int(1, 100) <= Math.max(0, Math.min(100, Math.floor(pct)));
+}
+
+function dropsFromFoe(foe: Actor): string[] {
+  const codes: string[] = [];
+
+  // 1) Slimes by color: red->heal, green->stamina, blue->mana
+  const sc = slimeColorOf(foe);
+  if (sc === 'red')   { if (rngChance(35)) codes.push('heal-lesser'); }
+  if (sc === 'green') { if (rngChance(35)) codes.push('stamina-lesser'); }
+  if (sc === 'blue')  { if (rngChance(35)) codes.push('mana-lesser'); }
+
+  // 2) Humanoids (e.g., goblins, bandits): stamina potions
+  if (isHumanoid(foe)) {
+    if (rngChance(30)) codes.push('stamina-lesser');
+  }
+
+  // Optional: keep your old generic drop on non-slimes & non-humanoids
+  if (!sc && !isHumanoid(foe)) {
+    if (rngChance(40)) codes.push('heal-lesser');
+  }
+
+  return codes;
+}
+
+function rollDropsForKilled(killed: Actor[]): string[] {
+  const out: string[] = [];
+  for (const k of killed) out.push(...dropsFromFoe(k));
+  return out;
+}
+
+
+
+
 
 export function initCombat(party: Actor[], foes: Actor[]): CombatState {
   const all = [...party, ...foes];
@@ -129,14 +176,18 @@ const newLog = [
     const foes   = Object.values(state.actors).filter(a => !a.isPlayer);
     const xpMsgs = awardXPFromFoes(heroes, foes);
 
-    const dropMsgs: string[] = [];
-    if (rng.int(0, 99) < 40) {
-      const potion = makeItemFromCode('heal-lesser');
-      const hero = heroes[0];
-      hero.inventory ??= [];
-      hero.inventory.push(potion);
-      dropMsgs.push(`${hero.name} finds a ${potion.name}.`);
-    }
+ const dropMsgs: string[] = [];
+const killedFoes = foes.filter(f => f.hp.current <= 0);
+
+const dropCodes = rollDropsForKilled(killedFoes);
+
+const hero = heroes[0];
+hero.inventory ??= [];
+for (const code of dropCodes) {
+  const item = makeItemFromCode(code);
+  hero.inventory.push(item);
+  dropMsgs.push(`${hero.name} finds a ${item.name}.`);
+}
 
     const winLog = [...newLog, { text: 'Victory!' }, 
       ...xpMsgs.map(text => ({ text })),

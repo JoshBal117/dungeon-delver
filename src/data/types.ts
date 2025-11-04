@@ -29,6 +29,6 @@ export type ItemSlot =
 
     tags?: string[];
 
-    onUse?: 'heal_10' | 'heal_25' | 'heal_50' | 'heal_100' | 'mana_10' | 'mana_25' | 'mana_50' | 'mana_100' | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
+    onUse?: 'heal_10' | 'heal_25' | 'heal_50' | 'heal_100' | 'mana_10' | 'mana_25' | 'mana_50' | 'mana_100' | 'stamina_10'| 'stamina_25' | 'stamina_50'| 'stamina_100' | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
     damageTYpe?: DamageType; // for weapons
   }
