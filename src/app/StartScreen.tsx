@@ -35,7 +35,7 @@ export default function StartScreen() {
         <h1 style={{ marginTop: 0, marginBottom: 12, fontSize: 28 }}>Dungeon Delver — v0.4a.b</h1>
 
         <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
-          Welcome to my prototype game called Dungeon Delver. Here in this beginning game, you will help me test and provide feedback about the current features. This is a turn based combat system, it also incorperates a hit/miss chance mechanic as well as a Critical Hit chance as well. The enemies you face will automatically attack after your own attack, and if the enemy is faster than your character, they will go first.
+          Welcome to my prototype game called Dungeon Delver. Here in this beginning game, you will help me test and provide feedback about the current features. This is a turn based combat system, which will evolve as I get more player feedback. The goal of this game is to eventually host this game on Steam, removing the needd for a web browsing game. Presently, the gamehas  reached a state where more enemies are being added to the game and if all goes well more characters will be added. Thank you so much for taking the time to checkout my game and for providing feedback. 
         </p>
 
         <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
