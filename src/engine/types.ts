@@ -98,6 +98,11 @@ export type Tags = {
   humanoid?: boolean;
   flying?: boolean;
   demon?: boolean;
+
+  goblinoid?: boolean;
+  slime?: boolean;
+  boss?: boolean | number;
+  miniboss?: boolean | number;
 };
 
 // -------------------------
@@ -124,6 +129,7 @@ export type Actor = {
   gold?: number;
 
   effects?: StatusEffect[];
+  spriteId?: string;
 
 };
 

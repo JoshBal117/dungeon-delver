@@ -1,3 +1,4 @@
+//types.ts in data
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 export type DamageType = 'slash' | 'stab' | 'pierce' | 'blunt' | 'fire' | 'cold' | 'lightning' | 'arcane' | 'holy' | 'necrotic';

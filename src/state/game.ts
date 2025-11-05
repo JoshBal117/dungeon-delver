@@ -3,13 +3,15 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CombatState, Actor, Item } from '../engine/types';
 import { initCombat, step, stepUntilPlayerAsync } from '../engine/combat';
-import { makeKnight, makeGoblin, makeMage, makeThief, makeCleric } from './factories';
+import { makeKnight, makeMage, makeThief, makeCleric } from './factories';
 import type { ClassId } from './factories';
 import { computeHpMax, computeMpMax, computeSpMax } from '../engine/derived';
 import { makeItemFromCode } from '../engine/item-index';
 import { newItemId } from '../engine/item-index';
 import { applyAbility, } from '../engine/abilities';
 import type { AbilityId } from '../engine/abilities';
+import { makeMonster, pickMonsterIdForLevel } from '../data/monsters';
+
 
 const ENEMY_DELAY_MS = 1000
 
@@ -149,10 +151,24 @@ function dedupeInventory(a: Actor): Actor {
 
 
 
-// For now, 1 goblin per fight (expand later)
-const spawnGoblins = () => [makeGoblin(1)];
+// enemy level rule: <10 → same or +1 (weighted to same); ≥10 → [player, player+3]
+function enemyLevelFor(playerLevel: number): number {
+  if (playerLevel < 10) {
+    return Math.random() < 0.65 ? playerLevel : (playerLevel + 1);
+  }
+  return playerLevel + Math.floor(Math.random() * 4); // +0..+3
+}
+
+function spawnEnemiesFor(heroes: Actor[]): Actor[] {
+  const playerLevel = heroes[0]?.level ?? 1;
+  const lvl = Math.max(1, enemyLevelFor(playerLevel));       // safety clamp
+  const kind = pickMonsterIdForLevel(lvl);
+  return [makeMonster(kind, lvl)];
+}
+
 const rebuildCombat = (heroes: Actor[]): CombatState =>
-  initCombat(heroes.map(ensurePools), spawnGoblins());
+  initCombat(heroes.map(ensurePools), spawnEnemiesFor(heroes));
+
 
 
 export const useGame = create<GameStore>()(
