@@ -68,7 +68,13 @@ export const MONSTERS: MonsterTemplate[] = [
       if (Math.random() < 0.40) (a.equipment ??= {}).boots   = makeItemFromCode('goblin-leather-boots');
       if (Math.random() < 0.30) (a.equipment ??= {}).helm    = makeItemFromCode('goblin-hide-helm');
     },
-    loot: () => (Math.random() < 0.25 ? [makeItemFromCode('heal-lesser')] : []),
+    loot: () => {
+  const r = Math.random();
+  if (r < 0.26) return [makeItemFromCode('heal-lesser')];     // most common
+  if (r < 0.33) return [makeItemFromCode('stamina-lesser')];  // sometimes
+  if (r < 0.36) return [makeItemFromCode('mana-lesser')];     // rare
+  return [];
+},
     spriteId: 'goblin',
   },
 
@@ -81,6 +87,13 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { beast: true },
     base: { hp: 14, str: 5, dex: 6, int: 1, wis: 2, vit: 3, con: 4, speed: 7, armor: 0, resist: 0, luck: 2 },
     growth: { hp: 3, str: 1, dex: 1, vit: 1, speed: 1 },
+    loot: () => {
+  const r = Math.random();
+  if (r < 0.18) return [makeItemFromCode('heal-lesser')];
+  if (r < 0.26) return [makeItemFromCode('stamina-lesser')];
+  if (r < 0.29) return [makeItemFromCode('mana-lesser')];
+  return [];
+},
     spriteId: 'wolf',
     // ability notes: Bite, Leaping Slash (engine hook later)
   },
@@ -97,7 +110,13 @@ export const MONSTERS: MonsterTemplate[] = [
       (a.equipment ??= {}).weapon = makeItemFromCode('goblin-shortsword');
       if (Math.random() < 0.9) (a.equipment ??= {}).cuirass = makeItemFromCode('hide-cuirass'); // “Fur Armor”
     },
-    loot: () => (Math.random() < 0.4 ? [makeItemFromCode('heal-lesser')] : []),
+    loot: () => {
+  const r = Math.random();
+  if (r < 0.24) return [makeItemFromCode('heal-lesser')];
+  if (r < 0.31) return [makeItemFromCode('stamina-lesser')];
+  if (r < 0.34) return [makeItemFromCode('mana-lesser')];
+  return [];
+},
     spriteId: 'goblin-warrior',
   },
 
@@ -113,7 +132,13 @@ export const MONSTERS: MonsterTemplate[] = [
       (a.equipment ??= {}).weapon = makeItemFromCode('goblin-bone-dagger');
       (a.equipment ??= {}).cuirass = makeItemFromCode('goblin-leather-armor'); // unique to thief
     },
-    loot: () => (Math.random() < 0.25 ? [makeItemFromCode('stamina-lesser')] : []),
+    loot: () => {
+  const r = Math.random();
+  if (r < 0.20) return [makeItemFromCode('heal-lesser')];
+  if (r < 0.30) return [makeItemFromCode('stamina-lesser')];
+  if (r < 0.33) return [makeItemFromCode('mana-lesser')];
+  return [];
+},
     spriteId: 'goblin-thief',
   },
 
@@ -143,7 +168,13 @@ export const MONSTERS: MonsterTemplate[] = [
       if (Math.random() < 0.4) (a.equipment ??= {}).cuirass = makeItemFromCode('leather-jerkin');
       if (Math.random() < 0.3) (a.equipment ??= {}).boots = makeItemFromCode('leather-boots');
     },
-    loot: () => (Math.random() < 0.30 ? [makeItemFromCode('stamina-lesser')] : []),
+    loot: () => {
+  const r = Math.random();
+  if (r < 0.22) return [makeItemFromCode('heal-lesser')];
+  if (r < 0.29) return [makeItemFromCode('stamina-lesser')];
+  if (r < 0.32) return [makeItemFromCode('mana-lesser')];
+  return [];
+},
     spriteId: 'human-bandit-dagger',
   },
 

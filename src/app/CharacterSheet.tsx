@@ -1,6 +1,11 @@
+//src/app/character.ts
+
 import { useGame } from '../state/game.ts';
 import type { Item } from '../engine/types';
 import { getTotalArmor,  } from '../engine/armor.ts';
+
+const displayName = ( i: Item) => 
+    (i.qty && i.qty > 1) ? `${i.name} x${i.qty}` : i.name;
 
 function ResourceBar({
   label,
@@ -117,7 +122,7 @@ export default function CharacterSheet() {
             <ul style={{ paddingLeft: 16, margin: 0 }}>
               {inv.map(it => (
                 <li key={it.id} style={{ display:'flex', gap:8, alignItems:'center', padding:'4px 0' }}>
-                  <span><b>{it.name}</b></span>
+                  <span><b>{displayName(it)}</b></span>
                   <small> ({it.type}{it.slot ? ` • ${it.slot}` : ''})</small>
                   <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
                      

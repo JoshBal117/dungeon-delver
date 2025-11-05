@@ -37,6 +37,7 @@ export function makeItemFromCode(code: string): Item {
                        // fine if undefined
     damageType: t.damageType, // for weapons
    
+   
   };
 
   return item;

@@ -93,10 +93,29 @@ const ensureBags = (a: Actor): Actor => ({
 
 function giveItemUniqueByCode(a: Actor, item: Item) {
   a.inventory ??= [];
+
+  // Stackable if it's a potion or flagged consumable
   const isStackable = item.type === 'potion' || item.consumable === true;
-  if (!isStackable && a.inventory.some(x => x.code === item.code)) return; // ← only block non-stackables
+
+  if (isStackable) {
+    const existing = a.inventory.find(
+      x => x.code === item.code && (x.type === 'potion' || x.consumable === true)
+    );
+    if (existing) {
+      existing.qty = (existing.qty ?? 1) + (item.qty ?? 1);
+      return;
+    }
+    // no existing stack — normalize qty and push
+    item.qty = item.qty ?? 1;
+    a.inventory.push(item);
+    return;
+  }
+
+  // Non-stackables: keep your uniqueness rule
+  if (a.inventory.some(x => x.code === item.code)) return;
   a.inventory.push(item);
 }
+
 
 
 function dedupeInventory(a: Actor): Actor {
@@ -123,20 +142,27 @@ function dedupeInventory(a: Actor): Actor {
     equippedCodes.add(eq[slot]!.code);
   });
 
-  // rebuild inventory with normalized ids and no dupes vs bag or equipped
+  // rebuild inventory with normalized ids and:
+  //  - merge stacks for consumables
+  //  - prevent dupes for non-consumables
   const normalized: Item[] = [];
   for (const orig of (a.inventory ?? [])) {
     const id = (!orig.id || seenIds.has(orig.id)) ? newItemId() : orig.id;
     seenIds.add(id);
     const it = { ...orig, id };
 
-    // potions/consumables can duplicate freely by code
-    if (it.type === 'potion' || it.consumable) {
-      normalized.push(it);
+    const isStackable = it.type === 'potion' || it.consumable === true;
+    if (isStackable) {
+      it.qty = it.qty ?? 1;
+      const existing = normalized.find(n => n.code === it.code && (n.type === 'potion' || n.consumable === true));
+      if (existing) {
+        existing.qty = (existing.qty ?? 1) + (it.qty ?? 1);
+      } else {
+        normalized.push(it);
+      }
       continue;
     }
 
-    // for non-consumables: drop if matches any equipped code OR a previous bag code
     if (equippedCodes.has(it.code)) continue;
     if (seenCodes.has(it.code)) continue;
 
@@ -146,6 +172,7 @@ function dedupeInventory(a: Actor): Actor {
 
   return { ...a, inventory: normalized, equipment: eq };
 }
+
 
 
 
@@ -407,7 +434,14 @@ if (hpAmt <= 0 && mpAmt <= 0 && spAmt <= 0) { set({ heroes }); return; }
     if (spAmt > 0) parts.push(`restores ${spAmt} SP`);
     combat.log = [...combat.log, { text: `${actor.name} drinks a potion and ${parts.join(' & ')}.` }];
   }
+  // Decrement stack for consumables, remove only if zero.
+// Non-consumables still get removed immediately.
+if (it.type === 'potion' || it.consumable === true) {
+  it.qty = (it.qty ?? 1) - 1;
+  if (it.qty <= 0) hero.inventory.splice(ix, 1);
+} else {
   hero.inventory.splice(ix, 1);
+}
 
   // item use consumes player's turn
   combat.turn = combat.turn + 1;
@@ -424,7 +458,14 @@ if (hpAmt > 0) hero.hp.current = Math.min(hero.hp.max, hero.hp.current + hpAmt);
 if (mpAmt > 0 && hero.mp) hero.mp.current = Math.min(hero.mp.max, hero.mp.current + mpAmt);
 if (spAmt > 0 && hero.sp) hero.sp.current = Math.min(hero.sp.max, hero.sp.current + spAmt);
 
-hero.inventory.splice(ix, 1);
+// Decrement stack for consumables, remove only if zero.
+// Non-consumables still get removed immediately.
+if (it.type === 'potion' || it.consumable === true) {
+  it.qty = (it.qty ?? 1) - 1;
+  if (it.qty <= 0) hero.inventory.splice(ix, 1);
+} else {
+  hero.inventory.splice(ix, 1);
+}
 
 // mirror into combat if present
 // mirror into combat if present

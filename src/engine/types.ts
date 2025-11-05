@@ -52,6 +52,7 @@ export interface Item {
   onUse?: OnUseCode;
   value?: number;
   damageType?: DamageType;                 // for weapons
+  qty?: number;
   description?: string;
 }
 
