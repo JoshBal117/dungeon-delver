@@ -427,20 +427,46 @@ if (spAmt > 0 && hero.sp) hero.sp.current = Math.min(hero.sp.max, hero.sp.curren
 hero.inventory.splice(ix, 1);
 
 // mirror into combat if present
+// mirror into combat if present
+// mirror into combat if present
 if (s.combat && s.combat.actors[actorId]) {
   const combat = { ...s.combat, actors: { ...s.combat.actors } };
   const act = combat.actors[actorId];
-  if (hpAmt > 0) act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
-  if (mpAmt > 0 && act.mp) act.mp = { ...act.mp, current: Math.min(act.mp.max, hero.mp.current) };
+
+  if (hpAmt > 0) {
+    act.hp = { ...act.hp, current: Math.min(act.hp.max, hero.hp.current) };
+  }
+  if (mpAmt > 0 && act.mp) {
+    act.mp = { ...act.mp, current: Math.min(act.mp.max, hero.mp.current) };
+  }
+
   if (spAmt > 0) {
-  hero.sp = hero.sp ?? { current: 0, max: 0 }; // ensure structure
-  hero.sp.current = Math.min(hero.sp.max, hero.sp.current + spAmt);
-}
+    // Ensure both hero.sp and act.sp exist before updating
+    if (!hero.sp) {
+      hero.sp = { current: 0, max: computeSpMax(hero) };
+    }
+    if (!act.sp) {
+      act.sp = { current: hero.sp.current, max: hero.sp.max };
+    }
+
+    // Now safe to update both
+    hero.sp = {
+      ...hero.sp,
+      current: Math.min(hero.sp.max, hero.sp.current + spAmt),
+    };
+    act.sp = {
+      ...act.sp,
+      current: Math.min(act.sp.max, act.sp.current + spAmt),
+    };
+  }
+
   combat.log = [...combat.log, { text: `${act.name} uses a potion.` }];
   set({ heroes, combat });
 } else {
   set({ heroes });
 }
+
+
 
 },
 

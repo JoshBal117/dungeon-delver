@@ -29,7 +29,7 @@ export type Rarity  = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type OnUseCode =
   | 'heal_10' | 'heal_25' | 'heal_50' | 'heal_100'
   | 'mana_10' | 'mana_25' | 'mana_50' | 'mana_100'
-  | 'stamina_ 10' | 'stamina_25'| 'stamina_50'| 'stamina_100'
+  | 'stamina_10' | 'stamina_25'| 'stamina_50'| 'stamina_100'
   | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
 
 export type StatusCode = 'stun' | 'parry' | 'defend';
