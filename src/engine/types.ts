@@ -32,7 +32,7 @@ export type OnUseCode =
   | 'stamina_10' | 'stamina_25'| 'stamina_50'| 'stamina_100'
   | 'speed_buff' | 'fire_res' | 'ice_res' | 'none';
 
-export type StatusCode = 'stun' | 'parry' | 'defend';
+export type StatusCode = 'stun' | 'parry' | 'defend' |'paralyzed' | 'armor_down';
 
 export type StatusEffect = {
   code: StatusCode;

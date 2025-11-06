@@ -107,7 +107,7 @@ export function step(state: CombatState): CombatState {
   const id = state.order[state.turn % state.order.length];
   const actor = state.actors[id];
 
-  const stunned = hasEffect(state, actor.id, 'stun');
+  const stunned = hasEffect(state, actor.id, 'stun') || hasEffect(state, actor.id, 'paralyzed');
 if (stunned) {
   const newLog = [...state.log, { text: `${actor.name} is stunned and loses the turn.` }];
   // tick and advance
