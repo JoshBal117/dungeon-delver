@@ -7,6 +7,9 @@ import CharacterSheet from './CharacterSheet';
 import { getSpriteFor } from '../assets/sprites';
 import StartScreen from './StartScreen.tsx';           // <-- no .tsx
 import dungeonBg from '../assets/background/dungeon/dungeon-tunnel.png'; // <-- module import
+// src/app/App.tsx
+import { abilitiesForActor, canUseAbility } from '../engine/abilities'; // ← add this import
+
 
 
 
@@ -398,19 +401,31 @@ export default function App() {
       {/* Abilities submenu */}
       
  
-      {ui.battleMenu === 'abilities' && (
-        <div style={{ display: 'grid', gap: 8 }}>
-          <div style={{ opacity: 0.85 }}>Abilities:</div>
-          <button onClick={() => performAbility('power_slash_lv1')}>Power Slash (2 SP)</button>
-          <button onClick={() => performAbility('shield_bash_lv1')}>Shield Bash (2 SP)</button>
-          <button onClick={() => performAbility('parry_lv1')}>Parry (15%)</button>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button onClick={() => setHeroes([...useGame.getState().heroes]) /* noop to please TS */} style={{ display: 'none' }} />
-            <button onClick={closeActionMenu}>Close</button>
-            <button onClick={openActionMenu}>Back</button>
-          </div>
-        </div>
-      )}
+     {ui.battleMenu === 'abilities' && (
+  <div style={{ display: 'grid', gap: 8 }}>
+    <div style={{ opacity: 0.85 }}>Abilities:</div>
+
+    {players[0] && abilitiesForActor(players[0]).map((ab) => {
+      const reason = canUseAbility(players[0], ab);
+      return (
+        <button
+          key={ab.id}
+          onClick={() => performAbility(ab.id)}
+          disabled={!!reason}
+          title={reason ?? ''}
+        >
+          {ab.name}{ab.spCost ? ` (${ab.spCost} SP)` : ''}
+        </button>
+      );
+    })}
+
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+      <button onClick={closeActionMenu}>Close</button>
+      <button onClick={openActionMenu}>Back</button>
+    </div>
+  </div>
+)}
+
     </div>
   </div>
 )}
