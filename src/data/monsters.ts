@@ -1,3 +1,5 @@
+//src/data/monster.ts
+
 import type { Actor, Item } from '../engine/types';
 import { xpToNextLevel } from '../engine/leveling';
 import { makeItemFromCode } from '../engine/item-index';

@@ -9,7 +9,7 @@ const url = (p: string) => BASE + p;
 // Central map: spriteId -> relative path under /public
 const SPRITES: Record<string, string> = {
   // beasts
-  'wolf':                          'images/sprites/beasts/wolf.png',
+  'wolf':                          'images/sprites/beasts/wolf-black.png',
   'giant-bat':                     'images/sprites/beasts/giant-bat.png',
 
   // goblins / hobs
@@ -36,7 +36,7 @@ const SPRITES: Record<string, string> = {
 };
 
 export function getSpriteFor(a: Actor): string {
-  if (a.isPlayer) return url('images/sprites/heroes/knight-64x64.png');
+  if (a.isPlayer) return url('images/sprites/heroes/knight-male-64x64.png');
 
   // ---- safe lookup via a narrowed key ----
   const key = a.spriteId as (keyof typeof SPRITES) | undefined;

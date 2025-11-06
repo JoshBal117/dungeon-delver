@@ -1,3 +1,4 @@
+//src/engine/combat.ts
 import { rng } from './rng';
 import { performAttack, applyDamage } from './rules';
 import type { Actor, CombatState, StatusCode, StatusEffect } from './types';
