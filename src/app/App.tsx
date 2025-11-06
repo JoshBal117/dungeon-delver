@@ -1,10 +1,14 @@
+// src/app/App.tsx
 import { useEffect, useRef } from 'react';
 import { useGame } from '../state/game';
 import type { Actor, LogEvent } from '../engine/types';
 import TitleScreen from './TitleScreen';
 import CharacterSheet from './CharacterSheet';
-import {getSpriteFor} from '../assets/sprites';
-import StartScreen from './StartScreen.tsx';
+import { getSpriteFor } from '../assets/sprites';
+import StartScreen from './StartScreen.tsx';           // <-- no .tsx
+import dungeonBg from '../assets/background/dungeon/dungeon-tunnel.png'; // <-- module import
+
+
 
 
 
@@ -212,57 +216,107 @@ export default function App() {
         </section>
 
          {/* 🆕 Battlefield sprites go here */}
-      <div
-  className="battlefield"
+     {/* 🆕 Battlefield with background */}
+<div
+  className="battlefield-wrap"
   style={{
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 24,
-    alignItems: 'end',
-    minHeight: 220,
-    padding: 16,
-    marginBottom: 16,
-    background: 'linear-gradient(#1a1d22, #0f1115)',
+    position: 'relative',
+    width: '100%',
+    maxWidth: 720,          // tweak to your layout
+    height: 288,            // 64px sprites read well at ~3–4x scale
+    margin: '0 auto 16px',
     border: '1px solid #23262b',
     borderRadius: 8,
+    overflow: 'hidden',
+    imageRendering: 'pixelated',
   }}
 >
+  {/* Background image layer */}
+  <img
+  src={dungeonBg}
+  alt="Dungeon Background"
+  style={{
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    imageRendering: 'pixelated',
+    zIndex: 0,
+  }}
+/>
 
 
-        {/* Player side (left) */}
-        <div style={{ display: 'flex', alignItems: 'end', height: 200 }}>
-          {players[0] && (
-            
-            <img
-              src={getSpriteFor(players[0])}
-              alt={players[0].name}
-              width={128}
-              height={128}
-              style={{ imageRendering: 'pixelated', width: 'clamp(72px, 28 vw, 128 px)', height: 'auto'}}
-            />
-          )}
-        </div>
+  {/* Optional dark overlay to make sprites pop */}
+  <div
+    style={{
+      position: 'absolute',
+      inset: 0,
+      background: 'rgba(0,0,0,0.18)',
+      zIndex: 1,
+    }}
+  />
 
-        {/* Enemy side (right) */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, alignItems: 'end', height: 200 }}>
-        
-          {foes.map((f) => (
-            <img
-              key={f.id}
-              src={getSpriteFor(f)}
-              alt={f.name}
-              width={96}
-              height={96}
-              style={{
-                imageRendering: 'pixelated',
-                width: 'clamp(56px, 22vw, 96px',
-                height: 'auto',
-                filter: f.hp.current <= 0 ? 'grayscale(100%) opacity(55%)' : 'none',
-              }}
-            />
-          ))}
-        </div>
-      </div>
+  {/* Foreground: your existing battlefield grid */}
+  <div
+    className="battlefield"
+    style={{
+      position: 'absolute',
+      inset: 0,
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 24,
+      alignItems: 'end',
+      padding: 16,
+      zIndex: 2,
+    }}
+  >
+    {/* Player side (left) */}
+    <div style={{ display: 'flex', alignItems: 'end', height: '100%' }}>
+      {players[0] && (
+        <img
+          src={getSpriteFor(players[0])}
+          alt={players[0].name}
+          width={128}
+          height={128}
+          style={{
+            imageRendering: 'pixelated',
+            width: 'clamp(72px, 28vw, 128px)', // fixed spacing
+            height: 'auto',
+          }}
+        />
+      )}
+    </div>
+
+    {/* Enemy side (right) */}
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: 12,
+        alignItems: 'end',
+        height: '100%',
+      }}
+    >
+      {foes.map((f) => (
+        <img
+          key={f.id}
+          src={getSpriteFor(f)}
+          alt={f.name}
+          width={96}
+          height={96}
+          style={{
+            imageRendering: 'pixelated',
+            width: 'clamp(56px, 22vw, 96px)', // fixed missing paren
+            height: 'auto',
+            filter: f.hp.current <= 0 ? 'grayscale(100%) opacity(55%)' : 'none',
+          }}
+        />
+      ))}
+    </div>
+  </div>
+</div>
+
 
 
 

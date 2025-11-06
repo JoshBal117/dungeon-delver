@@ -36,7 +36,7 @@ const SPRITES: Record<string, string> = {
 };
 
 export function getSpriteFor(a: Actor): string {
-  if (a.isPlayer) return url('images/sprites/heroes/knight-1.png');
+  if (a.isPlayer) return url('images/sprites/heroes/knight-64x64.png');
 
   // ---- safe lookup via a narrowed key ----
   const key = a.spriteId as (keyof typeof SPRITES) | undefined;
