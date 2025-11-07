@@ -62,10 +62,19 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { humanoid: true, goblinoid: true },
     base: { hp: 10, str: 2, dex: 4, int: 1, wis: 1, vit: 5, con: 1, speed: 3, armor: 0, resist: 0, luck: 2 },
     growth: { hp: 2, dex: 1 },
-    equip: (a) => {
-      const pool = ['goblin-club','wooden-club','iron-dagger','goblin-shortsword'] as const;
-      const w = pool[Math.floor(Math.random() * pool.length)];
-      (a.equipment ??= {}).weapon = makeItemFromCode(w);
+   equip: (a) => {
+    const pool = ['goblin-club', 'wooden-club', 'iron-dagger', 'goblin-shortsword', 'goblin-bone-dagger'] as const;
+    const w = pool[Math.floor(Math.random() * pool.length)];
+    (a.equipment ??= {}).weapon = makeItemFromCode(w);
+
+      const spriteFromWeapon: Record<string, string> = {
+      'goblin-club':        'goblin-club',
+      'wooden-club':        'goblin-club',
+      'iron-dagger':        'goblin-dagger',
+      'goblin-bone-dagger':'goblin-bone-dagger',
+      'goblin-shortsword':  'goblin-shortsword',
+    };
+    a.spriteId = spriteFromWeapon[w] ?? 'goblin';
       if (Math.random() < 0.60) (a.equipment ??= {}).cuirass = makeItemFromCode('goblin-loincloth');
       if (Math.random() < 0.40) (a.equipment ??= {}).boots   = makeItemFromCode('goblin-leather-boots');
       if (Math.random() < 0.30) (a.equipment ??= {}).helm    = makeItemFromCode('goblin-hide-helm');
@@ -73,7 +82,7 @@ export const MONSTERS: MonsterTemplate[] = [
     loot: () => {
   const r = Math.random();
   if (r < 0.26) return [makeItemFromCode('heal-lesser')];     // most common
-  if (r < 0.33) return [makeItemFromCode('stamina-lesser')];  // sometimes
+  if (r < 0.23) return [makeItemFromCode('stamina-lesser')];  // sometimes
   if (r < 0.36) return [makeItemFromCode('mana-lesser')];     // rare
   return [];
 },
@@ -89,6 +98,10 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { beast: true },
     base: { hp: 14, str: 5, dex: 6, int: 1, wis: 2, vit: 3, con: 4, speed: 7, armor: 0, resist: 0, luck: 2 },
     growth: { hp: 3, str: 1, dex: 1, vit: 1, speed: 1 },
+    equip: (a) => {
+    const pelts = ['wolf-black', 'wolf-gray', 'wolf-brown'] as const;
+    a.spriteId = pelts[Math.floor(Math.random() * pelts.length)];
+  },
     loot: () => {
   const r = Math.random();
   if (r < 0.18) return [makeItemFromCode('heal-lesser')];
@@ -96,7 +109,7 @@ export const MONSTERS: MonsterTemplate[] = [
   if (r < 0.29) return [makeItemFromCode('mana-lesser')];
   return [];
 },
-    spriteId: 'wolf',
+    spriteId: 'wolf-black',
     // ability notes: Bite, Leaping Slash (engine hook later)
   },
 
@@ -108,10 +121,11 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { humanoid: true, goblinoid: true },
     base: { hp: 15, str: 5, dex: 4, int: 2, wis: 4, vit: 5, con: 4, speed: 4, armor: 1, resist: 0, luck: 1 },
     growth: { hp: 3, str: 1, dex: 1, vit: 1, speed: 1, armor: 0.3 },
-    equip: (a) => {
-      (a.equipment ??= {}).weapon = makeItemFromCode('goblin-shortsword');
-      if (Math.random() < 0.9) (a.equipment ??= {}).cuirass = makeItemFromCode('hide-cuirass'); // “Fur Armor”
-    },
+   equip: (a) => {
+  (a.equipment ??= {}).weapon = makeItemFromCode('goblin-shortsword');
+  if (Math.random() < 0.9) (a.equipment ??= {}).cuirass = makeItemFromCode('hide-cuirass');
+  a.spriteId = 'goblin-warrior';
+},
     loot: () => {
   const r = Math.random();
   if (r < 0.24) return [makeItemFromCode('heal-lesser')];
@@ -130,10 +144,11 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { humanoid: true, goblinoid: true },
     base: { hp: 16, str: 4, dex: 6, int: 3, wis: 2, vit: 4, con: 4, speed: 7, armor: 1, resist: 0, luck: 1 },
     growth: { hp: 2, dex: 1, speed: 1, luck: 1 },
-    equip: (a) => {
-      (a.equipment ??= {}).weapon = makeItemFromCode('goblin-bone-dagger');
-      (a.equipment ??= {}).cuirass = makeItemFromCode('goblin-leather-armor'); // unique to thief
-    },
+   equip: (a) => {
+  (a.equipment ??= {}).weapon = makeItemFromCode('goblin-bone-dagger');
+  (a.equipment ??= {}).cuirass = makeItemFromCode('goblin-leather-armor');
+  a.spriteId = 'goblin-thief'; // matches your dedicated art
+},
     loot: () => {
   const r = Math.random();
   if (r < 0.20) return [makeItemFromCode('heal-lesser')];
@@ -164,12 +179,25 @@ export const MONSTERS: MonsterTemplate[] = [
     base: { hp: 22, str: 6, dex: 6, int: 3, wis: 3, vit: 5, con: 5, speed: 6, armor: 1, resist: 0, luck: 2 },
     growth: { hp: 3, str: 1, dex: 1, speed: 1 },
     equip: (a) => {
-      (a.equipment ??= {}).weapon = Math.random() < 0.5
-        ? makeItemFromCode('iron-shortsword')
-        : makeItemFromCode('wooden-club');
-      if (Math.random() < 0.4) (a.equipment ??= {}).cuirass = makeItemFromCode('leather-jerkin');
-      if (Math.random() < 0.3) (a.equipment ??= {}).boots = makeItemFromCode('leather-boots');
-    },
+  // pick their weapon first
+  const weaponCode = Math.random() < 0.5 ? 'iron-shortsword' : 'iron-dagger';
+  (a.equipment ??= {}).weapon = makeItemFromCode(weaponCode);
+
+  if (Math.random() < 0.4) (a.equipment ??= {}).cuirass = makeItemFromCode('leather-jerkin');
+  if (Math.random() < 0.3) (a.equipment ??= {}).boots   = makeItemFromCode('leather-boots');
+
+  // map weapon -> candidate sprite ids (choose one at random)
+  const pick = <T>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+  const pools: Record<string, readonly string[]> = {
+    'iron-dagger':    ['bandit-female-daggers', 'bandit-female-dagger2', 'bandit-male-dagger'] as const,
+    'iron-shortsword':['bandit-male-shortsword'] as const,
+    // if you ever add “wooden-club” etc, just add another pool here
+  };
+
+  const choices = pools[weaponCode] ?? ['bandit-male-dagger'];
+  a.spriteId = pick(choices);
+},
     loot: () => {
   const r = Math.random();
   if (r < 0.22) return [makeItemFromCode('heal-lesser')];
@@ -177,7 +205,7 @@ export const MONSTERS: MonsterTemplate[] = [
   if (r < 0.32) return [makeItemFromCode('mana-lesser')];
   return [];
 },
-    spriteId: 'human-bandit-dagger',
+   
   },
 
   // Goblin Boss Lv 5 (Mini-Boss)
@@ -188,12 +216,13 @@ export const MONSTERS: MonsterTemplate[] = [
     tags: { humanoid: true, goblinoid: true, miniboss: true },
     base: { hp: 25, str: 9, dex: 7, int: 6, wis: 5, vit: 6, con: 8, speed: 6, armor: 2, resist: 0, luck: 3 },
     equip: (a) => {
-      (a.equipment ??= {}).weapon   = makeItemFromCode('gladius');
-      (a.equipment ??= {}).cuirass  = makeItemFromCode('goblin-leather-jerkin');
-      (a.equipment ??= {}).boots    = makeItemFromCode('goblin-leather-boots');
-      (a.equipment ??= {}).helm     = makeItemFromCode('leather-hood');
-      (a.equipment ??= {}).gauntlets= makeItemFromCode('leather-gauntlets');
-    },
+  (a.equipment ??= {}).weapon   = makeItemFromCode('gladius');
+  (a.equipment ??= {}).cuirass  = makeItemFromCode('goblin-leather-jerkin');
+  (a.equipment ??= {}).boots    = makeItemFromCode('goblin-leather-boots');
+  (a.equipment ??= {}).helm     = makeItemFromCode('leather-hood');
+  (a.equipment ??= {}).gauntlets= makeItemFromCode('leather-gauntlets');
+  a.spriteId = 'goblin-boss';
+},
     loot: () => [makeItemFromCode('stamina-potion')], // guaranteed nice drop
     spriteId: 'goblin-boss',
 
@@ -212,7 +241,7 @@ export const MONSTERS: MonsterTemplate[] = [
       (a.equipment ??= {}).cuirass = makeItemFromCode('hide-armor');
     },
     loot: () => (Math.random() < 0.35 ? [makeItemFromCode('stamina-lesser')] : []),
-    spriteId: 'orc-longsword',
+    spriteId: 'orc-shortsword',
   },
 
   // Hobgoblin Lv 7
@@ -234,7 +263,7 @@ export const MONSTERS: MonsterTemplate[] = [
   // Green Slime Lv 8 (slime tag → stamina drops)
   {
     id: 'green-slime',
-    name: 'green Slime',
+    name: 'Green Slime',
     minLv: 8, maxLv: 12,
     tags: { slime: true },
     base: { hp: 45, str: 12, dex: 13, int: 1, wis: 11, vit: 8, con: 10, speed: 3, armor: 1, resist: 0, luck: 1 },
@@ -244,6 +273,27 @@ export const MONSTERS: MonsterTemplate[] = [
 
   },
 
+
+  {
+  id: 'orc-warrior',
+  name: 'Orc Warrior',
+  minLv: 8, maxLv: 11,
+  tags: { humanoid: true, orc: true },
+  base: { hp: 55, str: 18, dex: 14, int: 10, wis: 12, vit: 16, con: 16, speed: 6, armor: 2, resist: 0, luck: 5 },
+  growth: { hp: 10, vit: 4, con: 3 },
+  equip: (a) => {
+    (a.equipment ??= {}).weapon = makeItemFromCode('steel-broadsword');
+    (a.equipment ??= {}).cuirass = makeItemFromCode('steel-plate-cuirass');
+    // pick a sprite that exists; change if you add a broadsword asset
+    a.spriteId = 'orc-warrior-broadsword';
+  },
+  loot: () => {
+    const drops: Item[] = [];
+    if (Math.random() < 0.45) drops.push(makeItemFromCode('heal-potion'));
+    if (Math.random() < 0.65) drops.push(makeItemFromCode('steel-broadsword'));
+    return drops;
+  },
+},
   // … add: Orc Warrior (8–10), Orc Thug (8–10), Orc Brute (9–13), Orc Knight (11–22),
   // Skeletons (13–20), Red Slime (15–22), Skeleton Swordsman (16–23),
   // Orc Captain (25 boss), Gelatinous Cube (14), Minotaur Grunt (15 miniboss),

@@ -9,8 +9,10 @@ const url = (p: string) => BASE + p;
 // Central map: spriteId -> relative path under /public
 const SPRITES: Record<string, string> = {
   // beasts
-  'wolf':                          'images/sprites/beasts/wolf-black.png',
-  'giant-bat':                     'images/sprites/beasts/giant-bat.png',
+  'wolf-black':                          'images/sprites/beasts/wolf-black.png',
+  'wolf-gray' :                           'images/sprites/beasts/wolf-gray.png',
+  'wolf-brown':                           'images/sprites/beasts/wolf-brown.png', 
+  'giant-bat' :                           'images/sprites/beasts/giant-bat.png',
 
   // goblins / hobs
   'goblin':                        'images/sprites/goblins/goblin.png',
@@ -20,14 +22,18 @@ const SPRITES: Record<string, string> = {
   'hobgoblin-steel-longsword':     'images/sprites/goblins/hobgoblin-steel-longsword.png',
 
   // bandits
-  'human-bandit-dagger':           'images/sprites/bandits/human-bandit-dagger.png',
-  'human-bandit-daggers':          'images/sprites/bandits/human-bandit-daggers.png',
-  'human-bandit-shortsword':       'images/sprites/bandits/human-bandit-shortsword.png',
+  'bandit-female-daggers':         'images/sprites/bandits/bandit-female-daggers.png',
+  'bandit-female-dagger2':         'images/sprites/bandits/bandit-female-dagger2.png', // note the hyphen + singular “dagger2”
+  'bandit-male-dagger':            'images/sprites/bandits/bandit-male-dagger.png',
+  'bandit-male-shortsword':        'images/sprites/bandits/bandit-male-shortsword.png',
+  'bandit-male-loot':              'images/sprites/bandits/bandit-male-loot.png',      // optional, if you plan to use it
+  'male-highwayman':               'images/sprites/bandits/male-highwayman.png',       // optional alt
 
   // orcs
   'orc-longsword':                 'images/sprites/orcs/orc-longsword.png',
   'orc-shortsword':                'images/sprites/orcs/orc-shortsword.png',
-  'orc-mace':                      'images/sprites/orcs/orc-mace.png',
+  'orc-maul':                      'images/sprites/orcs/orc-maul.png',
+  'orc-warrior-mace':              'images/sprites/orcs/orc-warrior-mace.png',
 
   // slimes
   'blue-slime':                    'images/sprites/slimes/blue-slime.png',
@@ -62,7 +68,7 @@ export function getSpriteFor(a: Actor): string {
   if (name.includes('orc')) {
     if (w.includes('longsword'))  return url('images/sprites/orcs/orc-longsword.png');
     if (w.includes('shortsword')) return url('images/sprites/orcs/orc-shortsword.png');
-    if (w.includes('mace'))       return url('images/sprites/orcs/orc-mace.png');
+    if (w.includes('mace'))       return url('images/sprites/orcs/orc-warrior-mace.png');
     // generic orc if weapon is unknown
     return url('images/sprites/orcs/orc-shortsword.png');
   }
