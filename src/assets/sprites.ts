@@ -15,17 +15,20 @@ const SPRITES: Record<string, string> = {
   'giant-bat' :                           'images/sprites/beasts/giant-bat.png',
 
   // goblins / hobs
-  'goblin':                        'images/sprites/goblins/goblin.png',
-  'goblin-warrior':                'images/sprites/goblins/goblin-warrior.png',
-  'goblin-thief':                  'images/sprites/goblins/goblin-thief.png',
-  'goblin-boss':                   'images/sprites/goblins/goblin-boss.png',
-  'hobgoblin-steel-longsword':     'images/sprites/goblins/hobgoblin-steel-longsword.png',
-
+  'goblin':                 'images/sprites/goblins/goblin.png',
+'goblin-club':            'images/sprites/goblins/goblin-club.png',
+'goblin-dagger':          'images/sprites/goblins/goblin-dagger.png',
+'goblin-bone-dagger':     'images/sprites/goblins/goblin-bone-dagger.png',
+'goblin-shortsword':      'images/sprites/goblins/goblin-shortsword.png',
+'goblin-warrior':         'images/sprites/goblins/goblin-warrior.png',
+'goblin-thief':           'images/sprites/goblins/goblin-thief.png',
+'goblin-boss':            'images/sprites/goblins/goblin-boss.png',
+'hobgoblin-steel-longsword': 'images/sprites/goblins/hobgoblin-steel-longsword.png',
   // bandits
-  'bandit-female-daggers':         'images/sprites/bandits/bandit-female-daggers.png',
-  'bandit-female-dagger2':         'images/sprites/bandits/bandit-female-dagger2.png', // note the hyphen + singular “dagger2”
-  'bandit-male-dagger':            'images/sprites/bandits/bandit-male-dagger.png',
-  'bandit-male-shortsword':        'images/sprites/bandits/bandit-male-shortsword.png',
+  'bandit-female-daggers':  'images/sprites/bandits/bandit-female-daggers.png',
+'bandit-female-dagger2':  'images/sprites/bandits/bandit-female-dagger2.png',
+'bandit-male-dagger':     'images/sprites/bandits/bandit-male-dagger.png',
+'bandit-male-shortsword': 'images/sprites/bandits/bandit-male-shortsword.png',
   'bandit-male-loot':              'images/sprites/bandits/bandit-male-loot.png',      // optional, if you plan to use it
   'male-highwayman':               'images/sprites/bandits/male-highwayman.png',       // optional alt
 
