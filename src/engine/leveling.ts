@@ -1,5 +1,7 @@
+// src/engine/leveling.ts
+
 import type { Actor } from './attributes';
-import { computeHpMax, computeMpMax } from './derived';
+import { computeHpMax, computeMpMax, computeSpMax } from './derived';
 import { d4 } from './dice';
 
 export type LevelingMode = 'd4_per_attribute' | 'controlled_knight';
@@ -32,8 +34,10 @@ export function tryLevelUp(c: Actor, cfg = DefaultLeveling): string[] {
     // Recompute pools from new stats/level and heal to full (early design choice)
     const newHpMax = computeHpMax(c);
     const newMpMax = computeMpMax(c);
+    const newSpMax = computeSpMax(c);
     c.hp = { current: newHpMax, max: newHpMax };
     c.mp = { current: newMpMax, max: newMpMax };
+    c.sp = { current: newSpMax, max: newSpMax} ;
   }
   return log;
 }

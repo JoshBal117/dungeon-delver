@@ -1,3 +1,4 @@
+//src/engine/rng.ts
 export class RNG {
   private seed: number;
 

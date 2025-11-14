@@ -177,6 +177,17 @@ const newLog = [
     const foes   = Object.values(state.actors).filter(a => !a.isPlayer);
     const xpMsgs = awardXPFromFoes(heroes, foes);
 
+    const spMsgs: string[] = [];
+    for (const h of heroes) {
+      if (!h.sp) continue;
+      const gain = Math.max(2, Math.ceil(h.sp.max * 0.5));
+      const before = h.sp.current;
+      h.sp.current = Math.min(h.sp.max, h.sp.current + gain);
+      const actual = h.sp.current - before;
+      if (actual > 0) spMsgs.push(`${h.name} regains ${actual} Stamina between battles.`)
+    }
+
+  
  const dropMsgs: string[] = [];
 const killedFoes = foes.filter(f => f.hp.current <= 0);
 
@@ -192,6 +203,7 @@ for (const code of dropCodes) {
 
     const winLog = [...newLog, { text: 'Victory!' }, 
       ...xpMsgs.map(text => ({ text })),
+      ...spMsgs.map(text => ({ text })),
       ...dropMsgs.map(text => ({ text }))
     ];
     return { ...state, log: winLog, over: true };

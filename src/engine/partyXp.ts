@@ -1,3 +1,5 @@
+//src/engine/partXp.ts
+
 import type { Actor } from './types';
 import { tryLevelUp } from './leveling';
 import { computeHpMax, computeMpMax } from './derived';
@@ -37,15 +39,15 @@ function xpDeltaBucket(enemyLevel: number, heroLevel: number): number {
 function xpFromEnemyForHero(enemy: Actor, hero: Actor): number {
   // Boss/miniboss
   if (isBossLike(enemy)) {
-    return rint(100, 200);
+    return rint(200, 350);
   }
 
   const base = baseXpForEnemy(enemy);
   const d = xpDeltaBucket(enemy.level ?? 1, hero.level ?? 1);
 
-  if (d >= 3) return rint(40, 60);  // enemy +3
-  if (d === 2) return rint(30, 45); // enemy +2
-  if (d === 1) return rint(20, 30); // enemy +1
+  if (d >= 3) return rint(60, 80);  // enemy +3
+  if (d === 2) return rint(45, 55); // enemy +2
+  if (d === 1) return rint(30, 40); // enemy +1
   if (d === 0) return base;         // equal → 10
 
   // Diminishing returns for weaker foes

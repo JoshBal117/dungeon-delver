@@ -1,3 +1,5 @@
+// src/engine/ai/ts
+
 import type {Actor, CombatState} from './types'
 import type { AIAction } from './types'
 import { getTotalArmor } from './armor'
