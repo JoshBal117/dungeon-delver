@@ -90,9 +90,26 @@ function resolveOutcome(state: CombatState, log: LogEvent[]): CombatState {
   if (partyAlive && !foesAlive) {
     const heroes = Object.values(state.actors).filter(a => a.isPlayer);
     const foes   = Object.values(state.actors).filter(a => !a.isPlayer);
+
+    // 1) XP gain + level ups (includes SP full on level-up via awardXPFromFoes)
     const xpMsgs = awardXPFromFoes(heroes, foes);
     const xpLog: LogEvent[] = xpMsgs.map(t => ({ text: t }));
 
+    // 2) Between-battle Stamina regen, same rule as combat.step
+    const spMsgs: string[] = [];
+    for (const h of heroes) {
+      if (!h.sp) continue;
+      const gain   = Math.max(2, Math.ceil(h.sp.max * 0.5)); // half bar, min 2
+      const before = h.sp.current;
+      h.sp.current = Math.min(h.sp.max, h.sp.current + gain);
+      const actual = h.sp.current - before;
+      if (actual > 0) {
+        spMsgs.push(`${h.name} regains ${actual} Stamina between battles.`);
+      }
+    }
+    const spLog: LogEvent[] = spMsgs.map(t => ({ text: t }));
+
+    // 3) Simple potion drop (your existing ability-path drop logic)
     const dropMsgs: string[] = [];
     if (rng.int(0, 99) < 40) {
       const potion = makeItemFromCode('heal-lesser');
@@ -103,11 +120,17 @@ function resolveOutcome(state: CombatState, log: LogEvent[]): CombatState {
     }
     const dropLog: LogEvent[] = dropMsgs.map(t => ({ text: t }));
 
-    return { ...state, log: [...log, { text: 'Victory!' }, ...xpLog, ...dropLog], over: true };
+    return {
+      ...state,
+      log: [...log, { text: 'Victory!' }, ...xpLog, ...spLog, ...dropLog],
+      over: true,
+    };
   }
 
+  // Battle continues → just advance the turn
   return { ...state, log, turn: state.turn + 1 };
 }
+
 
 export function applyAbility(state: CombatState, userId: string, abilityId: AbilityId): CombatState {
   const ab = Abilities[abilityId];

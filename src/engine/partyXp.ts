@@ -2,7 +2,7 @@
 
 import type { Actor } from './types';
 import { tryLevelUp } from './leveling';
-import { computeHpMax, computeMpMax } from './derived';
+import { computeHpMax, computeMpMax, computeSpMax } from './derived';
 import { rng } from './rng';
 
 // --- small helpers ---
@@ -76,8 +76,16 @@ export function awardXPFromFoes(heroes: Actor[], foes: Actor[]): string[] {
     if (ups.length) {
       const hpMax = computeHpMax(hero);
       const mpMax = computeMpMax(hero);
+      const spMax = computeSpMax(hero);
       hero.hp = { current: hpMax, max: hpMax };
       hero.mp = { current: mpMax, max: mpMax };
+
+      if (!hero.sp) {
+        hero.sp = { current: spMax, max: spMax };
+      } else {
+        hero.sp.current = spMax;
+        hero.sp.max = spMax;
+      }
       log.push(...ups);
     }
   }

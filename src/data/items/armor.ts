@@ -12,7 +12,7 @@ export const ARMOR: ItemTemplate[] = [
   { code: 'goblin-leather-boots', name: 'Goblin Leather Boots', type: 'armor', slot: 'boots', rarity: 'common', mods: { armor: 1 } },
   { code: 'goblin-leather-jerkin', name: 'Goblin Leather Jerkin', type: 'armor', slot: 'cuirass', rarity: 'common', mods: { armor: 1 } },
   { code: 'goblin-leather-gloves', name: 'Goblin Leather Gloves', type: 'armor', slot: 'gauntlets', rarity: 'common', mods: { armor: 1 } },
-
+  {code: ' goblin-leather-armor', name: 'Goblin Leather Armor', type: 'armor', slot: 'cuirass', rarity: 'common', mods: { armor: 1 } },
   { code: 'leather-cuirass', name: 'Leather Chest Armor', type: 'armor', slot: 'cuirass', rarity: 'common', mods: { armor: 2 } },
   { code: 'leather-gauntlets', name: 'Leather Vambraces', type: 'armor', slot: 'gauntlets', rarity: 'common', mods: { armor: 2 } },
   { code: 'leather-greaves', name: 'Leather Pants', type: 'armor', slot: 'greaves', rarity: 'common', mods: { armor: 2 } },
