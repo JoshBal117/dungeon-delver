@@ -72,8 +72,19 @@ function addStatus(s: CombatState, id: string, eff: StatusEffect) {
   s.statuses[id].push(eff);
 }
 
-function rollPct(p: number) { return rng.int(1, 100) <= p; }
+function rollPct(p: number) {
+  return rng.int(1, 100) <= p;
+}
 
+// Reusable damage calc for Power Slash Lv1
+function computePowerSlashLv1Damage(user: Actor, target: Actor): number {
+
+  let dmg = dealPhysicalDamage(user, target) * 2; // base 2×
+  if (rollPct(70)) {
+    dmg = Math.floor(dmg * 1.5); // 70% good-angle bonus → up to 3×
+  }
+  return dmg;
+}
 function livingFoes(state: CombatState, user: Actor): Actor[] {
   return Object.values(state.actors).filter(a => a.isPlayer !== user.isPlayer && a.hp.current > 0);
 }
@@ -153,24 +164,27 @@ export function applyAbility(state: CombatState, userId: string, abilityId: Abil
 
   switch (abilityId) {
     // ---------- Existing Lv1 set ----------
-    case 'power_slash_lv1': {
-      if (!defaultTarget) {
-        log.push({ text: `${user.name} uses Power Slash, but there is no target.` });
-        return resolveOutcome(state, log);
-      }
-      const toHit = computeHitChance(user, defaultTarget);
-      if (!rollPct(toHit)) {
-        log.push({ text: `${user.name} uses Power Slash and misses ${defaultTarget.name}.` });
-        return resolveOutcome(state, log);
-      }
-      let dmg = dealPhysicalDamage(user, defaultTarget) * 2; // 2× at Lv1
-      if (rollPct(70)) dmg = Math.floor(dmg * 1.5);          // “good angle” bonus
-      const t = state.actors[defaultTarget.id];
-      t.hp.current = Math.max(0, t.hp.current - dmg);
-      log.push({ text: `${user.name} unleashes Power Slash on ${t.name} for ${dmg} damage! (${t.hp.current}/${t.hp.max} HP)` });
-      return resolveOutcome(state, log);
-    }
+   case 'power_slash_lv1': {
+  if (!defaultTarget) {
+    log.push({ text: `${user.name} uses Power Slash, but there is no target.` });
+    return resolveOutcome(state, log);
+  }
 
+  const t = state.actors[defaultTarget.id];
+  const toHit = computeHitChance(user, t);
+  if (!rollPct(toHit)) {
+    log.push({ text: `${user.name} uses Power Slash and misses ${t.name}.` });
+    return resolveOutcome(state, log);
+  }
+
+  const dmg = computePowerSlashLv1Damage(user, t);
+  t.hp.current = Math.max(0, t.hp.current - dmg);
+
+  log.push({
+    text: `${user.name} unleashes Power Slash on ${t.name} for ${dmg} damage! (${t.hp.current}/${t.hp.max} HP)`
+  });
+  return resolveOutcome(state, log);
+}
     case 'shield_bash_lv1': {
       if (!defaultTarget) {
         log.push({ text: `${user.name} tries Shield Bash, but there is no target.` });
@@ -194,38 +208,64 @@ export function applyAbility(state: CombatState, userId: string, abilityId: Abil
     }
 
     // ---------- New Knight abilities ----------
-    case 'knights_strike': {
-      const foes = livingFoes(state, user);
-      if (foes.length === 0) { log.push({ text: `${user.name} uses Knight’s Strike but no foes remain.` }); return resolveOutcome(state, log); }
-      const maxTargets = (user.level ?? 1) >= 21 ? 3 : 2; // Lv21 upgrade → 3 targets
-      const targets = foes.slice(0, maxTargets);
+   case 'knights_strike': {
+  const foes = livingFoes(state, user);
+  if (foes.length === 0) {
+    log.push({ text: `${user.name} uses Knight’s Strike but no foes remain.` });
+    return resolveOutcome(state, log);
+  }
 
-      if (targets.length === 1) {
-        const t = targets[0];
-        let total = 0;
-        for (let i = 0; i < 2; i++) {
-          const toHit = computeHitChance(user, t);
-          if (rollPct(toHit)) {
-            const dmg = dealPhysicalDamage(user, t);
-            t.hp.current = Math.max(0, t.hp.current - dmg);
-            total += dmg;
-          }
-        }
-        log.push({ text: `${user.name} executes Knight’s Strike on ${t.name} for ${total} total damage (2 hits).` });
-      } else {
-        for (const t of targets) {
-          const toHit = computeHitChance(user, t);
-          if (rollPct(toHit)) {
-            const dmg = dealPhysicalDamage(user, t);
-            t.hp.current = Math.max(0, t.hp.current - dmg);
-            log.push({ text: `${user.name} cleaves ${t.name} for ${dmg} damage.` });
-          } else {
-            log.push({ text: `${user.name} swings at ${t.name} but misses.` });
-          }
-        }
-      }
-      return resolveOutcome(state, log);
+  const maxTargets = (user.level ?? 1) >= 21 ? 3 : 2; // Lv21 upgrade → 3 targets
+  const targets = foes.slice(0, maxTargets);
+
+  // SINGLE-TARGET MODE: "two Power Slashes"
+  if (targets.length === 1) {
+    const t = state.actors[targets[0].id];
+
+    const toHit1 = computeHitChance(user, t);
+    const toHit2 = computeHitChance(user, t);
+
+    let total = 0;
+
+    if (rollPct(toHit1)) {
+      const dmg1 = computePowerSlashLv1Damage(user, t);
+      t.hp.current = Math.max(0, t.hp.current - dmg1);
+      total += dmg1;
+    } else {
+      log.push({ text: `${user.name}'s first swing of Knight’s Strike misses ${t.name}.` });
     }
+
+    if (t.hp.current > 0 && rollPct(toHit2)) {
+      const dmg2 = computePowerSlashLv1Damage(user, t);
+      t.hp.current = Math.max(0, t.hp.current - dmg2);
+      total += dmg2;
+    } else if (t.hp.current > 0) {
+      log.push({ text: `${user.name}'s second swing of Knight’s Strike misses ${t.name}.` });
+    }
+
+    log.push({
+      text: `${user.name} executes Knight’s Strike — two crushing arcs for ${total} total damage! (${t.hp.current}/${t.hp.max} HP)`
+    });
+
+    return resolveOutcome(state, log);
+  }
+
+  // MULTI-TARGET MODE: cleave slightly stronger than a basic attack
+  for (const target of targets) {
+    const t = state.actors[target.id];
+    const toHit = computeHitChance(user, t);
+    if (!rollPct(toHit)) {
+      log.push({ text: `${user.name} swings Knight’s Strike at ${t.name} but misses.` });
+      continue;
+    }
+    const base = dealPhysicalDamage(user, t);
+    const dmg = Math.floor(base * 1.5);
+    t.hp.current = Math.max(0, t.hp.current - dmg);
+    log.push({ text: `${user.name} cleaves ${t.name} for ${dmg} damage with Knight’s Strike.` });
+  }
+
+  return resolveOutcome(state, log);
+}
 
     case 'knights_aura': {
       const foes = livingFoes(state, user);
