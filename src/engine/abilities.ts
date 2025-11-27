@@ -201,11 +201,16 @@ export function applyAbility(state: CombatState, userId: string, abilityId: Abil
       return resolveOutcome(state, log);
     }
 
-    case 'parry_lv1': {
-      addStatus(state, user.id, { code: 'parry', turns: 1, potency: 0.15 });
-      log.push({ text: `${user.name} prepares to parry — 15% damage reduction until next turn.` });
-      return resolveOutcome(state, log);
-    }
+   case 'parry_lv1': {
+  // Next incoming hit is reduced, next attack is empowered
+  addStatus(state, user.id, { code: 'defend', turns: 1, potency: 0.50 }); // 50% dmg reduction on next hit
+  addStatus(state, user.id, { code: 'parry',  turns: 1, potency: 2.00 }); // 1.5× damage on next attack
+
+  log.push({
+    text: `${user.name} braces to parry — the next hit is softened, and the next strike will be a vicious riposte.`
+  });
+  return resolveOutcome(state, log);
+}
 
     // ---------- New Knight abilities ----------
    case 'knights_strike': {
@@ -329,10 +334,15 @@ export function applyAbility(state: CombatState, userId: string, abilityId: Abil
     }
 
     case 'parry_lv2': {
-      addStatus(state, user.id, { code: 'parry', turns: 1, potency: 0.25 });
-      log.push({ text: `${user.name} prepares to parry — 25% damage reduction until next turn.` });
-      return resolveOutcome(state, log);
-    }
+  // Stronger version: tougher guard, nastier riposte
+  addStatus(state, user.id, { code: 'defend', turns: 1, potency: 0.65 }); // 65% dmg reduction
+  addStatus(state, user.id, { code: 'parry',  turns: 1, potency: 4.00 }); // 2× damage on next attack
+
+  log.push({
+    text: `${user.name} enters a perfect parry stance — the next blow is blunted, and the riposte will be devastating.`
+  });
+  return resolveOutcome(state, log);
+}
 
     case 'starlight_slash': {
       const t0 = defaultTarget;

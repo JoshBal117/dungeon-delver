@@ -7,6 +7,8 @@ import { awardXPFromFoes } from './partyXp';
 import { decideAction } from './ai'
 
 
+
+
 // --- Loot helpers (typed, no any, uses rng) ----------------------
 type SlimeColor = 'red' | 'green' | 'blue';
 
@@ -77,25 +79,37 @@ export function initCombat(party: Actor[], foes: Actor[]): CombatState {
 
 }
 
-
-
 function getEffects(s: CombatState, id: string): StatusEffect[] {
   return (s.statuses?.[id] ?? []);
 }
+
 function hasEffect(s: CombatState, id: string, code: StatusCode): StatusEffect | undefined {
   return getEffects(s, id).find(e => e.code === code);
 }
+
 function tickStatuses(s: CombatState, id: string) {
   if (!s.statuses) return;
-  const next = (s.statuses[id] ?? []).map(e => ({ ...e, turns: e.turns - 1 })).filter(e => e.turns > 0);
+  const next = (s.statuses[id] ?? [])
+    .map(e => ({ ...e, turns: e.turns - 1 }))
+    .filter(e => e.turns > 0);
   s.statuses[id] = next;
 }
+
+
 function reduceDamageByStatuses(s: CombatState, targetId: string, dmg: number): number {
   let out = dmg;
-  const parry = hasEffect(s, targetId, 'parry');
-  if (parry?.potency) out = Math.floor(out * (1 - parry.potency));
+
   const defend = hasEffect(s, targetId, 'defend');
-  if (defend?.potency) out = Math.floor(out * (1 - defend.potency));
+  if (defend?.potency) {
+    out = Math.floor(out * (1 - defend.potency));
+
+    // Consume the defend buff after it soaks a hit
+    if (s.statuses?.[targetId]) {
+      s.statuses[targetId] = s.statuses[targetId]!.filter(e => e.code !== 'defend');
+    }
+  }
+
+  // Parry is now an offensive buff only; no damage reduction here.
   return Math.max(0, out);
 }
 
@@ -145,27 +159,51 @@ if (!target || target.hp.current <= 0) {
 // --- Attack roll ---
 const result = performAttack(actor, target);
 
+if (!result.hit) {
+  return {
+    ...state,
+    log: [...state.log, { text: `${actor.name} misses ${target.name}.` }],
+    turn: state.turn + 1,
+  };
+}
 
-  if (!result.hit) {
-    // Inline the return so no unused variable warning
-    return {
-      ...state,
-      log: [...state.log, { text: `${actor.name} misses ${target.name}.` }],
-      turn: state.turn + 1,
-    };
+// base damage from the roll
+let dmg = result.dmg;
+
+// Check for Parry riposte on the attacker
+const parryBuff = hasEffect(state, actor.id, 'parry');
+let usedParry = false;
+
+if (parryBuff && dmg > 0) {
+  const mult = parryBuff.potency ?? 1.5; // you can tune this
+  dmg = Math.max(1, Math.floor(dmg * mult));
+  usedParry = true;
+
+  // Consume the parry buff after it powers this attack
+  if (state.statuses?.[actor.id]) {
+    state.statuses[actor.id] = state.statuses[actor.id]!.filter(e => e.code !== 'parry');
   }
-  const mitigated = reduceDamageByStatuses(state, target.id, result.dmg);
-  applyDamage(target,mitigated);
+}
 
-// Pick a verb from damage type
+// Apply defensive reductions (Defend, etc.)
+const beforeHp = target.hp.current;
+const mitigated = reduceDamageByStatuses(state, target.id, dmg);
+applyDamage(target, mitigated);
+const afterHp = target.hp.current;
 
-// Use the fully formatted line from performAttack
-const newLog = [
-  ...state.log,
-  {
-    text: `${result.logLine} (${Math.max(0, target.hp.current)}/${target.hp.max} HP)`
-  },
-];
+console.log(
+  `[DEBUG] ${target.name} took ${mitigated} damage (raw ${dmg}, rolled ${result.dmg}). HP ${beforeHp} -> ${afterHp}`
+);
+
+// Build log line using *actual* damage dealt
+const hpText = `(${Math.max(0, afterHp)}/${target.hp.max} HP)`;
+
+const line = usedParry
+  ? `Parry Riposte! ${actor.name} capitalizes on the opening and strikes ${target.name} for ${mitigated} damage. ${hpText}`
+  : `${actor.name} hits ${target.name} for ${mitigated} damage. ${hpText}`;
+
+const newLog = [...state.log, { text: line }];
+
 
 
   // --- Victory/defeat check (unchanged, just use newLog instead of log) ---
